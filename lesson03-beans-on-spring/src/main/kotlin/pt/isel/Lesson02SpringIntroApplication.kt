@@ -1,4 +1,4 @@
-package pt.isel.lesson02_spring_intro
+package pt.isel
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
