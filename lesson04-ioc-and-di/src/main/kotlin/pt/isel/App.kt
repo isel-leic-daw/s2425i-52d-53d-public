@@ -2,7 +2,24 @@ package pt.isel
 
 fun main() {
     // resolveDependenciesManuallyByPropertyInjection()
-    resolveDependenciesManuallyByConstructorInjection()
+    // resolveDependenciesManuallyByConstructorInjection()
+    resolveWithIocContainer()
+}
+
+fun resolveWithIocContainer() {
+    loadInstanceOf(DataSourceClient::class)
+        .also { println(it) }
+    loadInstanceOf(MovieFinder::class)
+        .also { println(it) }
+    loadInstanceOf(MovieFinder::class)
+        .also { println(it) }
+    val lister = loadInstanceOf(MovieLister::class)
+    lister
+        .moviesDirectedBy("tarantino")
+        .forEach { println(it) }
+    lister
+        .moviesDirectedBy("kubrick")
+        .forEach { println(it) }
 }
 
 fun resolveDependenciesManuallyByConstructorInjection() {

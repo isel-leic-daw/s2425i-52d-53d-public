@@ -1,7 +1,10 @@
 package pt.isel
 
-@MyComponent
-class MovieFinderCsv(private val client: DataSourceClient) : MovieFinder {
+import org.springframework.stereotype.Component
+
+@Component
+class MovieFinderCsv(clients: List<DataSourceClient>) : MovieFinder {
+    private val client = clients.first()
     /**
      * IoC => Inversion of Control:
      * * This class does NOT instantiate its dependencies
