@@ -4,7 +4,10 @@ import org.springframework.stereotype.Component
 
 @Component
 class MovieFinderCsv(clients: List<DataSourceClient>) : MovieFinder {
-    private val client = clients.first()
+    // Don't do this in production code. Only for DEMO.
+    //
+    val client = clients.first {
+        it::class.simpleName?.contains("HttpClient") ?: false }
     /**
      * IoC => Inversion of Control:
      * * This class does NOT instantiate its dependencies
