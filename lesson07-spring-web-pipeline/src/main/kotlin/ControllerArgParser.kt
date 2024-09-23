@@ -1,10 +1,20 @@
 package pt.isel
 
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.validation.Valid
+import jakarta.validation.constraints.Min
+import jakarta.validation.constraints.Size
 import org.springframework.web.bind.annotation.*
 
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RestController
+
+// See https://beanvalidation.org for the Length and Min annotations.
+
 data class StudentInputModel(
-    val name: String,
+    @get:Size(min = 0, max = 10) val name: String,
     val nr: Int,
+    @get:Min(1999)
     val year: Int
 )
 
@@ -38,8 +48,15 @@ class ControllerArgParser {
              http://localhost:8080/path2
      */
     @PostMapping("/path2")
-    fun handler2BodyParser(@RequestBody std: StudentInputModel): String {
+    fun handler2BodyParser(@Valid @RequestBody std: StudentInputModel): String {
         return "Request to path 2 with student: $std"
+    }
+    /**
+     * Access all information in HTTP request
+     */
+    @GetMapping("/path3")
+    fun handler3(req: HttpServletRequest) {
+
     }
 
 }
