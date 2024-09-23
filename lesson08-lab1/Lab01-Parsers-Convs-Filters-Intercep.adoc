@@ -1,0 +1,29 @@
+= Spring Boot introductory exercises
+
+. Use link:https://start.spring.io[Spring Initializr] to create the basic structure for a Spring project, using Spring Boot and Spring MVC.
+** Don't forget to include the Spring MVC dependency.
+** Open the project in your preferred IDE. Take a look into: `build.gradle.kts` and the main function.
+** Run the main function and observe what is presented in the standard output.
+*** Did the server started correctly or was there an error?
+*** What is the listening port?
+*** Do an HTTP GET request to the listening server and observe the result.
+**** Use the Visual Studio Code (VSC) link:https://marketplace.visualstudio.com/items?itemName=humao.rest-client[REST client] to perform requests from (VSC).
+**** Use the link:https://curl.se/[Curl] command line tool to perform the request.
+
+. Add a controller with an handler mapped to the GET method and the `hello` path, returning a simple greetings string.
+** Create a service to provide the greetings message, similarly to what we did in class.
+** Support showing the greetings message in multiple languages. Use the `Accept-Language` request header to help make the decision of which language to use. Use the `Content-Language` header, placed in the response, to inform the client of which language was used.
+
+. Create and configure a filter that emits a log message for every processed HTTP request.
+** The log message must include: the HTTP request's method and URI; the response's status code; and an approximation of the time it took to process the request.
+** Register the filter by making its class a bean (e.g. found by component scanning).
+** Manually test the created filter.
+
+. Add to the log message both the name of the controller and the name of the handler function selected to process the request, if any.
+** Use the link:https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/servlet/HandlerInterceptor.html[HandlerInterceptor] extensibility point to obtain information about the used controller and handler.
+*** To register the interceptor, make the config class implement the `WebMvcConfigurer` interface and use the `addInterceptors` method from this interface.
+*** Use the `setAttribute` and `getAttribute` methods from `HttpServletRequest` as a way of communicating information between the interceptor and the filter.
+
+. Create a class implementing the `HandlerMethodArgumentResolver` interface as a way of providing the `Accept-Language` in a strongly-typed way.
+** Use the `WebMvcConfigurer` implementation to register the `HandlerMethodArgumentResolver`.
+** Take advantage of the information provided by the HandlerMethodArgumentResolver in the greetings controller.
