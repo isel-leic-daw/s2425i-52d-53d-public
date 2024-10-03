@@ -5,7 +5,8 @@ import java.time.LocalDateTime
 sealed class TimeSlot(
     open val id: Int,
     open val startTime: LocalDateTime,
-    open val durationInMinutes: Int
+    open val durationInMinutes: Int,
+    open val event: Event,
 ) {
     abstract fun addParticipant(participant: Participant): TimeSlot
 
@@ -19,8 +20,9 @@ data class TimeSlotSingle(
     override val id: Int,
     override val startTime: LocalDateTime,
     override val durationInMinutes: Int,
-    val owner: Participant? = null
-) : TimeSlot(id, startTime, durationInMinutes) {
+    override val event: Event,
+    val owner: Participant? = null // may be null depending on whether is selected, or not
+) : TimeSlot(id, startTime, durationInMinutes, event) {
     /**
      * Assign new participant if the slot is empty
      */
@@ -43,8 +45,9 @@ data class TimeSlotMultiple(
     override val id: Int,       // Changed from UUID to Int
     override val startTime: LocalDateTime,
     override val durationInMinutes: Int,
+    override val event: Event,
     val participants: List<Participant> = emptyList() // List of participants who are available for this time slot
-) : TimeSlot(id, startTime, durationInMinutes) {
+) : TimeSlot(id, startTime, durationInMinutes, event) {
     override fun addParticipant(participant: Participant): TimeSlotMultiple {
         return this.copy(participants = participants + participant)
     }
