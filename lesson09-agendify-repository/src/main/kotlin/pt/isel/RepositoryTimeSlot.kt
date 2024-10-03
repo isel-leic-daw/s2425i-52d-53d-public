@@ -6,7 +6,9 @@ import java.time.LocalDateTime
  * Repository interface for managing time slots, extends the generic Repository
  */
 interface RepositoryTimeSlot : Repository<TimeSlot> {
-    fun createTimeSlotSingle(eventId: Int, startTime: LocalDateTime, durationInMinutes: Int): TimeSlotSingle
+    fun createTimeSlotSingle(startTime: LocalDateTime, durationInMinutes: Int, event: Event): TimeSlotSingle
 
-    fun createTimeSlotMultiple(eventId: Int, startTime: LocalDateTime, durationInMinutes: Int): TimeSlotMultiple
+    fun createTimeSlotMultiple(startTime: LocalDateTime, durationInMinutes: Int, event: Event): TimeSlotMultiple
+
+    fun findAllByEvent(event: Event): List<TimeSlot>
 }

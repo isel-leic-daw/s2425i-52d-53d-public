@@ -8,5 +8,6 @@ interface Repository<T> {
     fun findAll(): List<T>    // Retrieve all entities
     fun save(entity: T)       // Save a new or existing entity
     fun deleteById(id: Int)   // Delete an entity by its ID
+    fun clear()               // Delete all entries
 }
 

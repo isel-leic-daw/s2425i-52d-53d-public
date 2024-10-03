@@ -12,6 +12,8 @@ repositories {
 dependencies {
     implementation(project(":lesson09-agendify-domain"))
 
+    implementation("jakarta.inject:jakarta.inject-api:2.0.1")
+
     testImplementation(kotlin("test"))
 }
 
