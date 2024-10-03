@@ -10,11 +10,12 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":lesson09-agendify-repository"))
-    implementation(project(":lesson09-agendify-domain"))
+    api(project(":lesson09-agendify-repository"))
+    api(project(":lesson09-agendify-domain"))
+
+    implementation("jakarta.inject:jakarta.inject-api:2.0.1")
 
     testImplementation(kotlin("test"))
-    testImplementation("io.mockk:mockk:1.13.12")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.0")
 }
