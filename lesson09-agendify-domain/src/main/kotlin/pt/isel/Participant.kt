@@ -1,11 +1,10 @@
 package pt.isel
 
 /**
- * Represents a participant in the event (could be organizer or guest)
+ * Represents a participant in a TimeSlotMultiple
  */
 data class Participant(
     val id: Int,
-    val name: String,
-    val email: String,
-    val kind: ParticipantKind
+    val user: User,
+    val slot: TimeSlotMultiple
 )

@@ -4,25 +4,27 @@ package pt.isel
  * Represents a scheduling event
  *
  * Class diagram in yuml.me as:
-[Event|+id: Int;+title: String;+description: String;+organizer: Participant;+selectionType: SelectionType;+timeSlots: List<TimeSlot>|+addTimeSlot(timeSlot: TimeSlot): Event; +replaceSlot(slotId: Int
-newSlot: TimeSlot): Event]
-[Participant|+id: Int;+name: String;+email: String;+kind: ParticipantKind|]
-[TimeSlot|+id: Int;+startTime: LocalDateTime;+durationInMinutes: Int|+addParticipant(participant: Participant): TimeSlot; +removeParticipant(participant: Participant): TimeSlot]
-[TimeSlotSingle|+owner: Participant?|]
-[TimeSlotMultiple|+participants: List\<Participant\>|]
+[User|id:Int; name:String; email:String]
+[Participant|id:Int; user:User; slot:TimeSlotMultiple]
+[Event|id:Int; title:String; description:String; organizer:User; selectionType:SelectionType]
+[SelectionType|SINGLE; MULTIPLE]
+[TimeSlot|id:Int; startTime:LocalDateTime; durationInMinutes:Int; event:Event]
+[TimeSlotSingle|owner:User?]
+[TimeSlotMultiple]
 
 // Define relationships
-[Event]->*[TimeSlot]
-[TimeSlotSingle]-^[TimeSlot]
-[TimeSlotSingle]->[Participant]
-[TimeSlotMultiple]-^[TimeSlot]
-[TimeSlotMultiple]->*[Participant]
-[Participant]->[ParticipantKind]
+[Event]<1-[TimeSlot]
+[Event]->[SelectionType]
+[Participant]-1>[TimeSlotMultiple]
+[Participant]-1>[User]
+[TimeSlot]^-[TimeSlotSingle]
+[TimeSlot]^-[TimeSlotMultiple]
+[TimeSlotSingle]->1[User]
  */
 data class Event(
     val id: Int,
     val title: String,
     val description: String?,
-    val organizer: Participant,
+    val organizer: User,
     val selectionType: SelectionType, // Indicates whether the event allows single or multiple selections
 )

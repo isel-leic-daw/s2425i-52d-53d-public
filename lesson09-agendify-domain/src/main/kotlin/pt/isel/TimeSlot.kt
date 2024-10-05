@@ -3,56 +3,76 @@ package pt.isel
 import java.time.LocalDateTime
 
 sealed class TimeSlot(
-    open val id: Int,
-    open val startTime: LocalDateTime,
-    open val durationInMinutes: Int,
-    open val event: Event,
+    val id: Int,
+    val startTime: LocalDateTime,
+    val durationInMinutes: Int,
+    val event: Event,
 ) {
-    abstract fun addParticipant(participant: Participant): TimeSlot
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
 
-    abstract fun removeParticipant(participant: Participant): TimeSlot
+        other as TimeSlot
+
+        if (id != other.id) return false
+        if (startTime != other.startTime) return false
+        if (durationInMinutes != other.durationInMinutes) return false
+        if (event != other.event) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = id
+        result = 31 * result + startTime.hashCode()
+        result = 31 * result + durationInMinutes
+        result = 31 * result + event.hashCode()
+        return result
+    }
 }
+
 
 /**
- * Represents a time slot available for a single participant
+ * Represents a time slot available for a single participant,
+ * which is the owner of this time slot.
  */
-data class TimeSlotSingle(
-    override val id: Int,
-    override val startTime: LocalDateTime,
-    override val durationInMinutes: Int,
-    override val event: Event,
-    val owner: Participant? = null // may be null depending on whether is selected, or not
-) : TimeSlot(id, startTime, durationInMinutes, event) {
+class TimeSlotSingle(
+    id: Int,
+    startTime: LocalDateTime,
+    durationInMinutes: Int,
+    event: Event,
+    val owner: User? = null // may be null depending on whether is selected, or not
+) : TimeSlot(
+    id, startTime, durationInMinutes, event
+) {
     /**
-     * Assign new participant if the slot is empty
+     * Assign new owner if the slot is empty
      */
-    override fun addParticipant(participant: Participant): TimeSlotSingle {
-        check(owner == null) { "This time slot is already allocated to a participant." }
-        return this.copy(owner = participant)
+    fun addOwner(owner: User): TimeSlotSingle {
+        check(this.owner == null) { "This time slot is already allocated to a participant." }
+        return this.copy(owner = owner)
     }
 
-    override fun removeParticipant(participant: Participant): TimeSlotSingle {
-        check(owner != null) { "The participant ${participant.name} is not the owner of this slot and cannot be removed!" }
-        require(owner == participant) { }
-        return this.copy(owner = null)
+    private fun copy(owner: User): TimeSlotSingle {
+        return TimeSlotSingle(id, startTime, durationInMinutes, event, owner)
+    }
+
+    fun removeOwner(owner: User): TimeSlotSingle {
+        check(this.owner != null) { "The participant ${owner.name} is not the owner of this slot and cannot be removed!" }
+        require(this.owner == owner) { }
+        return return TimeSlotSingle(id, startTime, durationInMinutes, event, null)
     }
 }
+
 
 /**
  * Represents a time slot available for multiple participants
  */
-data class TimeSlotMultiple(
-    override val id: Int,       // Changed from UUID to Int
-    override val startTime: LocalDateTime,
-    override val durationInMinutes: Int,
-    override val event: Event,
-    val participants: List<Participant> = emptyList() // List of participants who are available for this time slot
-) : TimeSlot(id, startTime, durationInMinutes, event) {
-    override fun addParticipant(participant: Participant): TimeSlotMultiple {
-        return this.copy(participants = participants + participant)
-    }
-
-    override fun removeParticipant(participant: Participant): TimeSlotMultiple {
-        return this.copy(participants = participants - participant)
-    }
-}
+class TimeSlotMultiple(
+    id: Int,
+    startTime: LocalDateTime,
+    durationInMinutes: Int,
+    event: Event,
+) : TimeSlot(
+    id, startTime, durationInMinutes, event
+)

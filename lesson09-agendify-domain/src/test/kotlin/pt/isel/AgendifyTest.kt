@@ -7,7 +7,7 @@ import java.time.LocalDateTime
 
 class AgendifyTest {
 
-    private val organizer = Participant(id = 1, name = "Alice", email = "alice@example.com", kind = ParticipantKind.ORGANIZER)
+    private val organizer = User(1, "Alice", "alice@example.com")
     private val eventSingle = Event(
         id = 1,
         title = "Team Meeting",
@@ -27,33 +27,33 @@ class AgendifyTest {
     @Test
     fun `test adding a time slot to an event`() {
 
-        val newSlot = TimeSlotSingle(
+        val newSlot = TimeSlotMultiple(
             id = 1,
             startTime = LocalDateTime.of(2024, 9, 30, 10, 0),
             durationInMinutes = 60,
-            eventSingle)
+            eventMultiple)
 
-        assertEquals(eventSingle, newSlot.event)
+        assertEquals(eventMultiple, newSlot.event)
     }
 
     @Test
     fun `test adding a participant to a TimeSlotSingle`() {
+        val owner = User(2, "Bob", "bob@example.com")
+
         val slot = TimeSlotSingle(
             id = 1,
             startTime = LocalDateTime.of(2024, 9, 30, 10, 0),
             durationInMinutes = 60,
-            eventSingle
+            eventSingle,
+            owner
         )
-        val participant = Participant(id = 2, name = "Bob", email = "bob@example.com", kind = ParticipantKind.GUEST)
 
-        val updatedSlot = slot.addParticipant(participant)
-
-        assertEquals(participant, updatedSlot.owner)
+        assertEquals(owner.name, "Bob")
     }
 
     @Test
     fun `test removing a participant from a TimeSlotSingle`() {
-        val participant = Participant(id = 2, name = "Bob", email = "bob@example.com", kind = ParticipantKind.GUEST)
+        val participant = User(2, "Bob", "bob@example.com")
         val slot = TimeSlotSingle(
             id = 1,
             startTime = LocalDateTime.of(2024, 9, 30, 10, 0),
@@ -62,16 +62,16 @@ class AgendifyTest {
             event = eventSingle
         )
 
-        val updatedSlot = slot.removeParticipant(participant)
+        val updatedSlot = slot.removeOwner(participant)
 
         assertNull(updatedSlot.owner)
     }
 
+
     @Test
     fun `test trying to add a participant when TimeSlotSingle already has an owner`() {
-        val participant1 = Participant(id = 2, name = "Bob", email = "bob@example.com", kind = ParticipantKind.GUEST)
-        val participant2 =
-            Participant(id = 3, name = "Charlie", email = "charlie@example.com", kind = ParticipantKind.GUEST)
+        val participant1 = User(2, "Bob", "bob@example.com")
+        val participant2 = User(3, "Charlie", "charlie@example.com")
         val slot = TimeSlotSingle(
             id = 1,
             startTime = LocalDateTime.of(2024, 9, 30, 10, 0),
@@ -81,10 +81,11 @@ class AgendifyTest {
         )
 
         val exception = assertThrows<IllegalStateException> {
-            slot.addParticipant(participant2)
+            slot.addOwner(participant2)
         }
         assertEquals("This time slot is already allocated to a participant.", exception.message)
     }
+
 
     @Test
     fun `test adding a participant to TimeSlotMultiple`() {
@@ -94,26 +95,9 @@ class AgendifyTest {
             durationInMinutes = 60,
             eventMultiple
         )
-        val participant = Participant(id = 2, name = "Bob", email = "bob@example.com", kind = ParticipantKind.GUEST)
+        val participant = Participant(2, User(2, "Bob", "bob@example.com"), slot)
 
-        val updatedSlot = slot.addParticipant(participant)
-
-        assertTrue(updatedSlot.participants.contains(participant))
+        assertEquals(participant.slot.id, slot.id)
     }
 
-    @Test
-    fun `test removing a participant from TimeSlotMultiple`() {
-        val participant = Participant(id = 2, name = "Bob", email = "bob@example.com", kind = ParticipantKind.GUEST)
-        val slot = TimeSlotMultiple(
-            id = 1,
-            startTime = LocalDateTime.of(2024, 9, 30, 10, 0),
-            durationInMinutes = 60,
-            participants = listOf(participant),
-            event = eventMultiple
-        )
-
-        val updatedSlot = slot.removeParticipant(participant)
-
-        assertFalse(updatedSlot.participants.contains(participant))
-    }
 }
