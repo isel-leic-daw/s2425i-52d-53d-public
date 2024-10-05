@@ -7,7 +7,7 @@ interface RepositoryEvent : Repository<Event> {
     fun createEvent(
         title: String,
         description: String?,
-        organizer: Participant,
+        organizer: User,
         selectionType: SelectionType
     ) : Event
 }

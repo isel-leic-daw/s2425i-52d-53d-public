@@ -1,10 +1,7 @@
 package pt.isel.mem
 
 import jakarta.inject.Named
-import pt.isel.Event
-import pt.isel.Participant
-import pt.isel.RepositoryEvent
-import pt.isel.SelectionType
+import pt.isel.*
 
 /**
  * Naif in memory repository non thread-safe and basic sequential id.
@@ -18,7 +15,7 @@ class RepositoryEventInMem : RepositoryEvent {
     override fun createEvent(
         title: String,
         description: String?,
-        organizer: Participant,
+        organizer: User,
         selectionType: SelectionType
     ): Event {
         return Event(events.count(), title, description, organizer, selectionType)

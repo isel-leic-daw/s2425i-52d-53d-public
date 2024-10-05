@@ -1,19 +1,19 @@
 package pt.isel
 
 import pt.isel.mem.RepositoryEventInMem
-import pt.isel.mem.RepositoryParticipantInMem
 import pt.isel.mem.RepositoryTimeslotInMem
+import pt.isel.mem.RepositoryUserInMem
 import java.time.LocalDateTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class RepositoryTimeSlotTest {
 
-    private val repoParticipants = RepositoryParticipantInMem().also { it.createParticipant(
-        name = "Alice",
-        email = "alice@example.com",
-        kind = ParticipantKind.ORGANIZER
-    ) }
+    private val repoUsers = RepositoryUserInMem().also {
+        it.createUser(
+            "Alice", "alice@example.com"
+        )
+    }
     private val repoTimeSlots = RepositoryTimeslotInMem()
 
     @Test
@@ -21,7 +21,7 @@ class RepositoryTimeSlotTest {
         val repoEvents = RepositoryEventInMem().also { it.createEvent(
             title = "Team Meeting",
             description = "Discuss project updates",
-            organizer = repoParticipants.findAll()[0],
+            organizer = repoUsers.findAll()[0],
             selectionType = SelectionType.SINGLE,
         ) }
 
@@ -40,7 +40,7 @@ class RepositoryTimeSlotTest {
 
         assertEquals(setOf(slot1, slot2), repoTimeSlots.findAllByEvent(event).toSet())
 
-        val newSlot = TimeSlotSingle(slot2.id, startTime = LocalDateTime.of(2024, 9, 30, 10, 30), durationInMinutes = 60, event)
+        val newSlot = TimeSlotSingle(slot2.id, LocalDateTime.of(2024, 9, 30, 10, 30), 60, event)
         repoTimeSlots.save(newSlot)
 
         val slots = repoTimeSlots.findAllByEvent(event).toSet()

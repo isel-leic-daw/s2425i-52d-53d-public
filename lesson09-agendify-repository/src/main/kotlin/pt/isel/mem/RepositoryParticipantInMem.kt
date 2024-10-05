@@ -2,8 +2,9 @@ package pt.isel.mem
 
 import jakarta.inject.Named
 import pt.isel.Participant
-import pt.isel.ParticipantKind
 import pt.isel.RepositoryParticipant
+import pt.isel.TimeSlotMultiple
+import pt.isel.User
 
 /**
  * Naif in memory repository non thread-safe and basic sequential id.
@@ -13,13 +14,17 @@ import pt.isel.RepositoryParticipant
 class RepositoryParticipantInMem : RepositoryParticipant {
     private val participants = mutableListOf<Participant>()
 
-    override fun createParticipant(name: String, email: String, kind: ParticipantKind): Participant {
-        return Participant(participants.count(), name, email, kind)
+    override fun createParticipant(user: User, slot: TimeSlotMultiple) : Participant {
+        return Participant(participants.count(), user, slot)
             .also { participants.add(it) }
     }
 
-    override fun findByEmail(email: String): Participant? {
-        return participants.firstOrNull { it.email == email }
+    override fun findByEmail(email: String, slot: TimeSlotMultiple, ): Participant? {
+        return participants.firstOrNull { it.user.email == email && it.slot.id == slot.id }
+    }
+
+    override fun findAllByTimeSlot(slot: TimeSlotMultiple): List<Participant> {
+        return participants.filter { it.slot.id == slot.id }
     }
 
     override fun findById(id: Int): Participant? {

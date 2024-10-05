@@ -4,8 +4,9 @@ import pt.isel.*
 
 class TransactionInMem(
     override val repoEvents: RepositoryEvent,
+    override val repoUsers: RepositoryUser,
     override val repoParticipants: RepositoryParticipant,
-    override val repoSlots: RepositoryTimeSlot
+    override val repoSlots: RepositoryTimeSlot,
 ) : Transaction {
 
     override fun rollback() {

@@ -13,7 +13,11 @@ import java.time.LocalDateTime
 class RepositoryTimeslotInMem : RepositoryTimeSlot {
     private val timeSlots = mutableListOf<TimeSlot>()
 
-    override fun createTimeSlotSingle(startTime: LocalDateTime, durationInMinutes: Int, event: Event): TimeSlotSingle {
+    override fun createTimeSlotSingle(
+        startTime: LocalDateTime,
+        durationInMinutes: Int,
+        event: Event
+    ): TimeSlotSingle {
         return TimeSlotSingle(timeSlots.count(), startTime, durationInMinutes, event)
             .also { timeSlots.add(it) }
     }
