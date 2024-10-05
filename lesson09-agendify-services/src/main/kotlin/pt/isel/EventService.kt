@@ -5,9 +5,15 @@ import java.time.LocalDateTime
 
 sealed class EventError {
     data object EventNotFound : EventError()
-    data object ParticipantNotFound : EventError()
+    data object UserNotFound : EventError()
     data object TimeSlotNotFound : EventError()
     data object SingleTimeSlotAlreadyAllocated : EventError()
+    data object UserIsAlreadyParticipantInTimeSlot : EventError()
+}
+
+sealed class TimeSlotError {
+    data object TimeSlotNotFound : TimeSlotError()
+    data object TimeSlotSingleHasNotMultipleParticipants : TimeSlotError()
 }
 
 @Named
@@ -18,27 +24,40 @@ class EventService(
     /**
      * Add participant to a time slot
      */
-    fun addParticipantToTimeSlot(timeSlotId: Int, participantId: Int): Either<EventError, TimeSlot> = trxManager.run {
+    fun addParticipantToTimeSlot(timeSlotId: Int, userId: Int): Either<EventError, TimeSlot> = trxManager.run {
         // Find the time slot within the event
         val timeSlot: TimeSlot = repoSlots.findById(timeSlotId)
             ?: return@run failure(EventError.TimeSlotNotFound)
 
-        // For
-        if(timeSlot is TimeSlotSingle && timeSlot.owner != null) {
-            return@run failure(EventError.SingleTimeSlotAlreadyAllocated)
+        // Fetch the User
+        val user = repoUsers.findById(userId)
+            ?: return@run failure(EventError.UserNotFound)
+
+        when (timeSlot) {
+            is TimeSlotSingle -> {
+                // A TimeSlotSingle with already an owner cannot be allocated to other participant
+                if(timeSlot.owner != null) {
+                    return@run failure(EventError.SingleTimeSlotAlreadyAllocated)
+                }
+                // Try to add the participant to the time slot
+                val updatedTimeSlot = timeSlot.addOwner(user)
+
+                // Replace the old time slot with the updated one in the event
+                repoSlots.save(updatedTimeSlot)
+
+                // Return the updated event in the Either type
+                success(updatedTimeSlot)
+            }
+            is TimeSlotMultiple -> {
+                // Return Failure if the user is already a participant in that TimeSlot
+                if(repoParticipants.findByEmail(user.email, timeSlot) != null) {
+                    return@run failure(EventError.UserIsAlreadyParticipantInTimeSlot)
+                }
+                // Otherwise, create a new Participant in that TimeSlot for that user.
+                repoParticipants.createParticipant(user, timeSlot)
+                success(timeSlot)
+            }
         }
-        // Fetch the participant
-        val participant = repoParticipants.findById(participantId)
-            ?: return@run failure(EventError.ParticipantNotFound)
-
-        // Try to add the participant to the time slot
-        val updatedTimeSlot = timeSlot.addParticipant(participant)
-
-        // Replace the old time slot with the updated one in the event
-        repoSlots.save(updatedTimeSlot)
-
-        // Return the updated event in the Either type
-        success(updatedTimeSlot)
     }
 
     /**
@@ -73,8 +92,16 @@ class EventService(
         description: String?,
         organizerId: Int,
         selectionType: SelectionType
-    ): Either<EventError.ParticipantNotFound, Event> = trxManager.run {
-        val organizer = repoParticipants.findById(organizerId) ?: return@run failure(EventError.ParticipantNotFound)
+    ): Either<EventError.UserNotFound, Event> = trxManager.run {
+        val organizer = repoUsers.findById(organizerId) ?: return@run failure(EventError.UserNotFound)
         success(repoEvents.createEvent(title, description, organizer, selectionType))
+    }
+
+    fun getParticipantsInTimeSlot(timeSlotId: Int): Either<TimeSlotError, List<Participant>> = trxManager.run {
+        val slot = repoSlots.findById(timeSlotId) ?: return@run failure(TimeSlotError.TimeSlotNotFound)
+        when(slot) {
+            is TimeSlotSingle -> failure(TimeSlotError.TimeSlotSingleHasNotMultipleParticipants)
+            is TimeSlotMultiple -> success(repoParticipants.findAllByTimeSlot(slot))
+        }
     }
 }
