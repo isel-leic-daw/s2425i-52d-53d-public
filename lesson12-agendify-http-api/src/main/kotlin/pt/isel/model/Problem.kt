@@ -22,5 +22,6 @@ sealed class Problem(
     data object EventNotFound : Problem(URI("$PROBLEM_URI_PATH/event-not-found"))
     data object TimeSlotNotFound : Problem(URI("$PROBLEM_URI_PATH/event-not-found"))
     data object TimeSlotAlreadyAllocated : Problem(URI("$PROBLEM_URI_PATH/timeslot-already-allocated"))
+    data object UserIsAlreadyParticipantInTimeSlot : Problem(URI("$PROBLEM_URI_PATH/user-is-already-participant-in-time-slot"))
 
 }

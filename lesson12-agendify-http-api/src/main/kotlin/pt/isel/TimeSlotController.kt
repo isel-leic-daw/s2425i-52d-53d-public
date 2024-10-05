@@ -41,9 +41,10 @@ class TimeSlotController(
             is Success -> ResponseEntity.ok(timeSlot.value)
             is Failure -> when (timeSlot.value) {
                 is TimeSlotNotFound -> Problem.TimeSlotNotFound.response(HttpStatus.NOT_FOUND)
-                is ParticipantNotFound -> Problem.ParticipantNotFound.response(HttpStatus.NOT_FOUND)
+                is UserNotFound -> Problem.ParticipantNotFound.response(HttpStatus.NOT_FOUND)
                 is EventNotFound -> Problem.EventNotFound.response(HttpStatus.NOT_FOUND)
                 is SingleTimeSlotAlreadyAllocated -> Problem.TimeSlotAlreadyAllocated.response(HttpStatus.CONFLICT)
+                UserIsAlreadyParticipantInTimeSlot -> Problem.UserIsAlreadyParticipantInTimeSlot.response(HttpStatus.CONFLICT)
             }
         }
     }

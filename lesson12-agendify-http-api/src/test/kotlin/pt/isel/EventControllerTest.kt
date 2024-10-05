@@ -27,6 +27,7 @@ class EventControllerTest {
     fun setUp() {
         trxManager.run {
             repoEvents.clear()
+            repoUsers.clear()
             repoParticipants.clear()
             repoSlots.clear()
         }
@@ -34,7 +35,7 @@ class EventControllerTest {
 
     @Test
     fun `getAllEvents should return a list of events`() {
-        val rose = trxManager.run { repoParticipants.createParticipant("Rose Mary", "rose@example.com", ParticipantKind.ORGANIZER) }
+        val rose = trxManager.run { repoUsers.createUser("Rose Mary", "rose@example.com") }
         val event0 = trxManager.run { repoEvents.createEvent("Swim", "Swim for 2K free style", rose, SelectionType.SINGLE) }
         val event1 = trxManager.run { repoEvents.createEvent("Status Meeting", "Coffee break and more", rose, SelectionType.MULTIPLE) }
 
@@ -53,7 +54,7 @@ class EventControllerTest {
 
     @Test
     fun `getEventById should return an event if found`() {
-        val rose = trxManager.run { repoParticipants.createParticipant("Rose Mary", "rose@example.com", ParticipantKind.ORGANIZER) }
+        val rose = trxManager.run { repoUsers.createUser("Rose Mary", "rose@example.com") }
         val event0 = trxManager.run { repoEvents.createEvent("Swim", "Swim for 2K free style", rose, SelectionType.SINGLE) }
 
         // given: an HTTP client
@@ -82,7 +83,7 @@ class EventControllerTest {
 
     @Test
     fun `createEvent should return 201 if event created successfully`() {
-        val rose = trxManager.run { repoParticipants.createParticipant("Rose Mary", "rose@example.com", ParticipantKind.ORGANIZER) }
+        val rose = trxManager.run { repoUsers.createUser("Rose Mary", "rose@example.com") }
         val event = EventInput("Fun", "Hang around and have fun.", rose.id, SelectionType.MULTIPLE)
 
         // given: an HTTP client

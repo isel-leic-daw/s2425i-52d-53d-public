@@ -29,7 +29,7 @@ class EventController(
 
     @PostMapping
     fun createEvent(@RequestBody ev: EventInput): ResponseEntity<Any> {
-        val event: Either<EventError.ParticipantNotFound, Event> =
+        val event: Either<EventError.UserNotFound, Event> =
             eventService.createEvent(ev.title, ev.description, ev.organizerId, ev.selectionType)
         return when (event) {
             is Success -> ResponseEntity.ok(event.value)

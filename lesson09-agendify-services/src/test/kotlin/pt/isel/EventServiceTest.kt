@@ -12,71 +12,77 @@ import kotlin.test.assertTrue
 class EventServiceTest {
 
     private lateinit var serviceEvent: EventService
-    private lateinit var serviceParticipant: ParticipantService
+    private lateinit var serviceUser: UserService
 
     @BeforeEach
     fun setup() {
         val trxManager = TransactionManagerInMem()
         serviceEvent = EventService(trxManager)
-        serviceParticipant = ParticipantService(trxManager)
+        serviceUser = UserService(trxManager)
     }
 
     @Test
     fun `addParticipantToTimeSlot should add participant to a time slot`() {
         val timeSlotId = 0
-        val participant = serviceParticipant.createParticipant("John", "john@example.com", ParticipantKind.GUEST)
-        check(participant is Success)
+        val organizer = serviceUser.createUser("John", "john@example.com")
+        assertIs<Success<User>>(organizer)
 
         serviceEvent
-            .createEvent("Meeting", null, participant.value.id, SelectionType.MULTIPLE)
+            .createEvent("Meeting", null, organizer.value.id, SelectionType.MULTIPLE)
             .also {
                 val ev = it as Success<Event>
                 serviceEvent.createFreeTimeSlot(ev.value.id, LocalDateTime.now(), 60)
             }
 
 
-        val updatedTimeSlot = serviceEvent.addParticipantToTimeSlot(timeSlotId, participant.value.id)
+        val updatedTimeSlot = serviceEvent.addParticipantToTimeSlot(timeSlotId, organizer.value.id)
 
         assertTrue(updatedTimeSlot is Success)
-        assertEquals((updatedTimeSlot.value as TimeSlotMultiple).participants.size, 1)
-        assertEquals((updatedTimeSlot.value as TimeSlotMultiple).participants[0], participant.value)
+        assertIs<TimeSlotMultiple>(updatedTimeSlot.value)
+
+        val participants = serviceEvent.getParticipantsInTimeSlot(timeSlotId)
+        assertIs<Success<List<Participant>>>(participants)
+        assertEquals(1, participants.value.size)
+        assertEquals(organizer.value, participants.value[0].user)
     }
 
     @Test
     fun `addParticipantToTimeSlot should return Error already allocated for a Single Time slot with an owner`() {
         val timeSlotId = 0
-        val participant = serviceParticipant
-            .createParticipant("John", "john@example.com", ParticipantKind.GUEST)
+        val organizer = serviceUser
+            .createUser("John", "john@example.com")
             .let { check(it is Success); it.value }
 
         serviceEvent
-            .createEvent("Meeting", null, participant.id, SelectionType.SINGLE)
+            .createEvent("Meeting", null, organizer.id, SelectionType.SINGLE)
             .also {
                 check(it is Success)
                 serviceEvent.createFreeTimeSlot(it.value.id, LocalDateTime.now(), 60)
             }
 
-        val updatedTimeSlot = serviceEvent.addParticipantToTimeSlot(timeSlotId, participant.id)
+        val updatedTimeSlot = serviceEvent.addParticipantToTimeSlot(timeSlotId, organizer.id)
 
         assertIs<Success<TimeSlot>>(updatedTimeSlot)
         assertIs<TimeSlotSingle>(updatedTimeSlot.value)
         val owner = (updatedTimeSlot.value as TimeSlotSingle).owner
         assertNotNull(owner)
         owner.run {
-            assertEquals(id, participant.id)
-            assertEquals(name, participant.name)
-            assertEquals(email, participant.email)
+            assertEquals(id, organizer.id)
+            assertEquals(name, organizer.name)
+            assertEquals(email, organizer.email)
         }
-        val res = serviceEvent.addParticipantToTimeSlot(timeSlotId, 99)
+        val otherUser = serviceUser.createUser("john", "john@rambo.com")
+        assertIs<Success<User>>(otherUser)
+        val res = serviceEvent.addParticipantToTimeSlot(timeSlotId, otherUser.value.id)
         assertIs<Failure<EventError>>(res)
         assertIs<EventError.SingleTimeSlotAlreadyAllocated>(res.value)
     }
 
     @Test
-    fun `addParticipantToTimeSlot should return ParticipantNotFound when participant is not found`() {
+    fun `addParticipantToTimeSlot should return UserNotFound when participant is not found`() {
         val timeSlotId = 0
-        serviceParticipant
-            .createParticipant("Organizer", "organizer@example.com", ParticipantKind.ORGANIZER)
+        serviceUser
+            .createUser("Organizer", "organizer@example.com")
             .let { check(it is Success); it.value }
             .let { participant -> serviceEvent.createEvent("Meeting", null, participant.id, SelectionType.MULTIPLE) }
             .let { check(it is Success); it.value }
@@ -86,35 +92,31 @@ class EventServiceTest {
         val result = serviceEvent.addParticipantToTimeSlot(timeSlotId, 9999)
 
         assertTrue(result is Failure)
-        assertEquals(result.value, EventError.ParticipantNotFound)
+        assertEquals(result.value, EventError.UserNotFound)
     }
 
     @Test
-    fun `createParticipant should create and return a participant`() {
+    fun `createUser should create and return a participant`() {
         val name = "Alice"
         val email = "alice@example.com"
-        val kind = ParticipantKind.GUEST
 
-        val result = serviceParticipant.createParticipant(name, email, kind)
+        val result = serviceUser.createUser(name, email)
 
-        assertIs<Success<Participant>>(result)
+        assertIs<Success<User>>(result)
         assertEquals(name, result.value.name)
         assertEquals(email, result.value.email)
-        assertEquals(kind, result.value.kind)
+
     }
 
     @Test
-    fun `createParticipant with already used email should return an error`() {
-        serviceParticipant.createParticipant(
-            "Alice",
-            "alice@example.com",
-            ParticipantKind.GUEST)
+    fun `createUser with already used email should return an error`() {
+        serviceUser.createUser("Alice", "alice@example.com",)
 
-        val result: Either<ParticipantError.AlreadyUsedEmailAddress, Participant> =
-            serviceParticipant.createParticipant("Mary", "alice@example.com", ParticipantKind.ORGANIZER)
+        val result: Either<UserError.AlreadyUsedEmailAddress, User> =
+            serviceUser.createUser("Mary", "alice@example.com")
 
-        assertIs<Failure<ParticipantError>>(result)
-        assertIs<ParticipantError>(result.value)
+        assertIs<Failure<UserError>>(result)
+        assertIs<UserError>(result.value)
     }
 
     @Test
@@ -122,8 +124,8 @@ class EventServiceTest {
         val eventId = 0
         val startTime = LocalDateTime.now()
         val durationInMinutes = 60
-        serviceParticipant
-            .createParticipant("Organizer", "organizer@example.com", ParticipantKind.ORGANIZER)
+        serviceUser
+            .createUser("Organizer", "organizer@example.com")
             .let { check(it is Success); it.value }
             .also { participant -> serviceEvent.createEvent("Meeting", null, participant.id, SelectionType.SINGLE) }
 
@@ -141,8 +143,8 @@ class EventServiceTest {
         val eventId = 0
         val startTime = LocalDateTime.now()
         val durationInMinutes = 60
-        serviceParticipant
-            .createParticipant("Organizer", "organizer@example.com", ParticipantKind.ORGANIZER)
+        serviceUser
+            .createUser("Organizer", "organizer@example.com")
             .let { check(it is Success); it.value }
             .also { participant -> serviceEvent.createEvent("Meeting", null, participant.id, SelectionType.MULTIPLE) }
 

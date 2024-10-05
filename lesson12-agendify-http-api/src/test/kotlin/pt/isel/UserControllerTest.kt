@@ -1,7 +1,6 @@
 package pt.isel
 
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.springframework.beans.factory.annotation.Autowired
@@ -9,11 +8,11 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
-import pt.isel.model.ParticipantInput
+import pt.isel.model.UserInput
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class ParticipantControllerTest {
+class UserControllerTest {
 
     // Injected by the test environment
     @LocalServerPort
@@ -22,19 +21,17 @@ class ParticipantControllerTest {
     @Autowired
     private lateinit var trxManager: TransactionManager
 
-    val johnDoe = ParticipantInput(
+    val johnDoe = UserInput(
         name = "John Doe",
-        email = "john.doe@example.com",
-        kind = ParticipantKind.GUEST
+        email = "john.doe@example.com"
     )
 
     @BeforeAll
     fun setup() {
         trxManager.run {
-            repoParticipants.createParticipant(
+            repoUsers.createUser(
                 johnDoe.name,
-                johnDoe.email,
-                johnDoe.kind
+                johnDoe.email
             )
         }
 
@@ -46,11 +43,11 @@ class ParticipantControllerTest {
         val client = WebTestClient.bindToServer().baseUrl("http://localhost:$port/api").build()
 
         // and: a random participant
-        val rose = ParticipantInput(name = "Rose Mary", email = "rose@example.com", kind = ParticipantKind.GUEST)
+        val rose = UserInput(name = "Rose Mary", email = "rose@example.com")
 
         // Perform the request and assert the results
         client.post()
-            .uri("/participants")
+            .uri("/users")
             .contentType(MediaType.APPLICATION_JSON)
             .bodyValue(rose)
             .exchange()
@@ -59,7 +56,6 @@ class ParticipantControllerTest {
             .expectBody()
             .jsonPath("name").isEqualTo("Rose Mary")
             .jsonPath("email").isEqualTo("rose@example.com")
-            .jsonPath("kind").isEqualTo(ParticipantKind.GUEST.name)
     }
 
     @Test
@@ -69,7 +65,7 @@ class ParticipantControllerTest {
 
         // Perform the request and assert the results
         client.post()
-            .uri("/participants")
+            .uri("/users")
             .contentType(MediaType.APPLICATION_JSON)
             .bodyValue(johnDoe)
             .exchange()
