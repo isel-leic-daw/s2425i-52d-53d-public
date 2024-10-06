@@ -15,8 +15,17 @@ dependencies {
 
     implementation("jakarta.inject:jakarta.inject-api:2.0.1")
 
+
+    testImplementation(project(":lesson13-agendify-repository-jdbi"))
+    // for JDBI
+    testImplementation("org.jdbi:jdbi3-core:3.37.1")
+    testImplementation("org.jdbi:jdbi3-kotlin:3.37.1")
+    testImplementation("org.jdbi:jdbi3-postgres:3.37.1")
+    testImplementation("org.postgresql:postgresql:42.7.2")
+
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.0")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.0")
 }
 
