@@ -17,8 +17,6 @@ import kotlin.test.assertTrue
 
 class EventServiceTest {
     companion object {
-        private fun runWithHandle(block: (Handle) -> Unit) = jdbi.useTransaction<Exception>(block)
-
         private val jdbi =
             Jdbi.create(
                 PGSimpleDataSource().apply {
@@ -29,20 +27,18 @@ class EventServiceTest {
         @JvmStatic
         fun transactionManagers(): Stream<TransactionManager> {
             return Stream.of(
-                TransactionManagerInMem(),
-                TransactionManagerJdbi(jdbi)
+                TransactionManagerInMem().also { cleanup(it) },
+                TransactionManagerJdbi(jdbi).also { cleanup(it) }
             )
         }
-    }
 
-
-    @BeforeEach
-    fun setup() {
-        runWithHandle { handle: Handle ->
-            RepositoryParticipantJdbi(handle).clear()
-            RepositoryTimeSlotJdbi(handle).clear()
-            RepositoryEventJdbi(handle).clear()
-            RepositoryUserJdbi(handle).clear()
+        private fun cleanup(trxManager: TransactionManager) {
+            trxManager.run {
+                repoParticipants.clear()
+                repoSlots.clear()
+                repoEvents.clear()
+                repoUsers.clear()
+            }
         }
     }
 
