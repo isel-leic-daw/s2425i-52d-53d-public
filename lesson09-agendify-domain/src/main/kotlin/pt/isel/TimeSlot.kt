@@ -31,7 +31,6 @@ sealed class TimeSlot(
     }
 }
 
-
 /**
  * Represents a time slot available for a single participant,
  * which is the owner of this time slot.
@@ -41,10 +40,14 @@ class TimeSlotSingle(
     startTime: LocalDateTime,
     durationInMinutes: Int,
     event: Event,
-    val owner: User? = null // may be null depending on whether is selected, or not
+    // may be null depending on whether is selected, or not
+    val owner: User? = null,
 ) : TimeSlot(
-    id, startTime, durationInMinutes, event
-) {
+        id,
+        startTime,
+        durationInMinutes,
+        event,
+    ) {
     /**
      * Assign new owner if the slot is empty
      */
@@ -53,9 +56,7 @@ class TimeSlotSingle(
         return this.copy(owner = owner)
     }
 
-    private fun copy(owner: User): TimeSlotSingle {
-        return TimeSlotSingle(id, startTime, durationInMinutes, event, owner)
-    }
+    private fun copy(owner: User): TimeSlotSingle = TimeSlotSingle(id, startTime, durationInMinutes, event, owner)
 
     fun removeOwner(owner: User): TimeSlotSingle {
         check(this.owner != null) { "The participant ${owner.name} is not the owner of this slot and cannot be removed!" }
@@ -80,7 +81,6 @@ class TimeSlotSingle(
     }
 }
 
-
 /**
  * Represents a time slot available for multiple participants
  */
@@ -90,5 +90,8 @@ class TimeSlotMultiple(
     durationInMinutes: Int,
     event: Event,
 ) : TimeSlot(
-    id, startTime, durationInMinutes, event
-)
+        id,
+        startTime,
+        durationInMinutes,
+        event,
+    )

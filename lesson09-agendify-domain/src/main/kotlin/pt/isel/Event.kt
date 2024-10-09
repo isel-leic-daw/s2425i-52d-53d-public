@@ -26,5 +26,6 @@ data class Event(
     val title: String,
     val description: String?,
     val organizer: User,
-    val selectionType: SelectionType, // Indicates whether the event allows single or multiple selections
+    // Indicates whether the event allows single or multiple selections
+    val selectionType: SelectionType,
 )

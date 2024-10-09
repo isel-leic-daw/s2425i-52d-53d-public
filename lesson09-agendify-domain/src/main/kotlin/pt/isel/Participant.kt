@@ -6,5 +6,5 @@ package pt.isel
 data class Participant(
     val id: Int,
     val user: User,
-    val slot: TimeSlotMultiple
+    val slot: TimeSlotMultiple,
 )

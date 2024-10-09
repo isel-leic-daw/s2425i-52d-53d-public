@@ -5,5 +5,5 @@ package pt.isel
  */
 enum class SelectionType {
     SINGLE,
-    MULTIPLE
+    MULTIPLE,
 }
