@@ -1,9 +1,7 @@
 package pt.isel.mem
 
-import jakarta.inject.Named
 import pt.isel.*
 
-@Named
 class TransactionManagerInMem : TransactionManager {
     private val repoEvents = RepositoryEventInMem()
     private val repoUsers = RepositoryUserInMem()
