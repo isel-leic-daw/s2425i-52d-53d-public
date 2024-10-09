@@ -15,12 +15,9 @@ dependencies {
 
     implementation("jakarta.inject:jakarta.inject-api:2.0.1")
 
-
-    testImplementation(project(":lesson13-agendify-repository-jdbi"))
     // for JDBI
+    testImplementation(project(":lesson13-agendify-repository-jdbi"))
     testImplementation("org.jdbi:jdbi3-core:3.37.1")
-    testImplementation("org.jdbi:jdbi3-kotlin:3.37.1")
-    testImplementation("org.jdbi:jdbi3-postgres:3.37.1")
     testImplementation("org.postgresql:postgresql:42.7.2")
 
     testImplementation(kotlin("test"))
