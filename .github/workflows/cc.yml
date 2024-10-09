@@ -16,4 +16,4 @@ jobs:
       - name: Build with Gradle
         env:
           DB_URL: ${{ secrets.DB_URL }}
-        run: ./code/jvm/gradlew -p code/jvm check --info
+        run: ./gradlew check --info
