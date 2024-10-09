@@ -21,17 +21,19 @@ repositories {
 dependencies {
     implementation(project(":lesson09-agendify-services"))
 
+    // To use Spring MVC and the Servlet API
+    implementation("org.springframework:spring-webmvc:6.1.13")
 
-    // Spring framework and Kotlin Reflect
-    implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    // for JDBI and Postgres Tests
+    testImplementation(project(":lesson13-agendify-repository-jdbi"))
+    testImplementation("org.jdbi:jdbi3-core:3.37.1")
+    testImplementation("org.postgresql:postgresql:42.7.2")
 
-    testImplementation("org.springframework.boot:spring-boot-starter-webflux")
+    // To use WebTestClient on tests
+    testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-
+    testImplementation("org.springframework.boot:spring-boot-starter-webflux")
+    testImplementation(kotlin("test"))
 }
 
 kotlin {

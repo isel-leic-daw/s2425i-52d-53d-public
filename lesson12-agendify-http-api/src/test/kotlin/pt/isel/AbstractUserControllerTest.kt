@@ -12,7 +12,7 @@ import pt.isel.model.UserInput
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class UserControllerTest {
+abstract class AbstractUserControllerTest {
 
     // Injected by the test environment
     @LocalServerPort
@@ -29,6 +29,10 @@ class UserControllerTest {
     @BeforeAll
     fun setup() {
         trxManager.run {
+            repoParticipants.clear()
+            repoSlots.clear()
+            repoEvents.clear()
+            repoUsers.clear()
             repoUsers.createUser(
                 johnDoe.name,
                 johnDoe.email

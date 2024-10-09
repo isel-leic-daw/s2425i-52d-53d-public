@@ -6,15 +6,13 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.test.web.reactive.server.WebTestClient
-import pt.isel.mem.RepositoryEventInMem
-import pt.isel.mem.RepositoryParticipantInMem
-import pt.isel.mem.RepositoryTimeslotInMem
-import pt.isel.mem.TransactionManagerInMem
 import pt.isel.model.EventInput
 
-
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class EventControllerTest {
+@SpringBootTest(
+    properties = ["spring.main.allow-bean-definition-overriding=true"],
+    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
+)
+abstract class AbstractEventControllerTest {
 
     // Injected by the test environment
     @LocalServerPort
@@ -26,10 +24,10 @@ class EventControllerTest {
     @BeforeEach
     fun setUp() {
         trxManager.run {
-            repoEvents.clear()
-            repoUsers.clear()
             repoParticipants.clear()
             repoSlots.clear()
+            repoEvents.clear()
+            repoUsers.clear()
         }
     }
 
@@ -62,7 +60,7 @@ class EventControllerTest {
 
         // Perform GET request and verify response
         client.get()
-            .uri("/events/0")
+            .uri("/events/${event0.id}")
             .exchange()
             .expectStatus().isOk
             .expectBody(Event::class.java)
@@ -96,7 +94,11 @@ class EventControllerTest {
             .exchange()
             .expectStatus().isOk
             .expectBody(Event::class.java)
-            .isEqualTo(Event(0, event.title, event.description, rose, event.selectionType))
+            .also {
+                val eventId = trxManager.run { repoEvents.findAll().last().id }
+                it.isEqualTo(Event(eventId, event.title, event.description, rose, event.selectionType))
+            }
+
     }
 
     @Test

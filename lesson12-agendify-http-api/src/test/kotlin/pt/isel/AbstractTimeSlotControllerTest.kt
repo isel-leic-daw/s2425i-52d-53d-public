@@ -10,7 +10,7 @@ import java.time.LocalDateTime
 import kotlin.test.Test
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class TimeSlotControllerTest(@Autowired val webTestClient: WebTestClient) {
+abstract class AbstractTimeSlotControllerTest {
 
     @Autowired
     lateinit var eventService: EventService
@@ -21,13 +21,16 @@ class TimeSlotControllerTest(@Autowired val webTestClient: WebTestClient) {
     @Autowired
     private lateinit var trxManager: TransactionManager
 
+    @Autowired
+    private lateinit var webTestClient: WebTestClient
+
     @BeforeEach
     fun setUp() {
         trxManager.run {
-            repoEvents.clear()
-            repoUsers.clear()
             repoParticipants.clear()
             repoSlots.clear()
+            repoEvents.clear()
+            repoUsers.clear()
         }
     }
 
