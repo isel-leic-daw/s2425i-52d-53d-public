@@ -1,9 +1,6 @@
 package pt.isel
 
-import org.jdbi.v3.core.Handle
 import org.jdbi.v3.core.Jdbi
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.postgresql.ds.PGSimpleDataSource
@@ -18,19 +15,19 @@ import kotlin.test.assertTrue
 class EventServiceTest {
     companion object {
         private val jdbi =
-            Jdbi.create(
-                PGSimpleDataSource().apply {
-                    setURL("jdbc:postgresql://localhost:5432/db?user=dbuser&password=changeit")
-                },
-            ).configureWithAppRequirements()
+            Jdbi
+                .create(
+                    PGSimpleDataSource().apply {
+                        setURL(Environment.getDbUrl())
+                    },
+                ).configureWithAppRequirements()
 
         @JvmStatic
-        fun transactionManagers(): Stream<TransactionManager> {
-            return Stream.of(
+        fun transactionManagers(): Stream<TransactionManager> =
+            Stream.of(
                 TransactionManagerInMem().also { cleanup(it) },
-                TransactionManagerJdbi(jdbi).also { cleanup(it) }
+                TransactionManagerJdbi(jdbi).also { cleanup(it) },
             )
-        }
 
         private fun cleanup(trxManager: TransactionManager) {
             trxManager.run {
@@ -51,9 +48,10 @@ class EventServiceTest {
         val organizer = serviceUser.createUser("John", "john@example.com")
         assertIs<Success<User>>(organizer)
 
-        val ev = serviceEvent
-            .createEvent("Meeting", null, organizer.value.id, SelectionType.MULTIPLE)
-            .let { it as Success<Event> }
+        val ev =
+            serviceEvent
+                .createEvent("Meeting", null, organizer.value.id, SelectionType.MULTIPLE)
+                .let { it as Success<Event> }
         val ts = serviceEvent.createFreeTimeSlot(ev.value.id, LocalDateTime.now(), 60)
         assertIs<Success<TimeSlot>>(ts)
         val timeSlotId = ts.value.id
@@ -71,20 +69,27 @@ class EventServiceTest {
 
     @ParameterizedTest
     @MethodSource("transactionManagers")
-    fun `addParticipantToTimeSlot should return Error already allocated for a Single Time slot with an owner`(trxManager: TransactionManager) {
+    fun `addParticipantToTimeSlot should return Error already allocated for a Single Time slot with an owner`(
+        trxManager: TransactionManager,
+    ) {
         val serviceEvent = EventService(trxManager)
         val serviceUser = UserService(trxManager)
 
-        val organizer = serviceUser
-            .createUser("John", "john@example.com")
-            .let { check(it is Success); it.value }
+        val organizer =
+            serviceUser
+                .createUser("John", "john@example.com")
+                .let {
+                    check(it is Success)
+                    it.value
+                }
 
-        val ts = serviceEvent
-            .createEvent("Meeting", null, organizer.id, SelectionType.SINGLE)
-            .let {
-                check(it is Success)
-                serviceEvent.createFreeTimeSlot(it.value.id, LocalDateTime.now(), 60)
-            }
+        val ts =
+            serviceEvent
+                .createEvent("Meeting", null, organizer.id, SelectionType.SINGLE)
+                .let {
+                    check(it is Success)
+                    serviceEvent.createFreeTimeSlot(it.value.id, LocalDateTime.now(), 60)
+                }
         assertIs<Success<TimeSlot>>(ts)
 
         val updatedTimeSlot = serviceEvent.addParticipantToTimeSlot(ts.value.id, organizer.id)
@@ -111,12 +116,23 @@ class EventServiceTest {
         val serviceEvent = EventService(trxManager)
         val serviceUser = UserService(trxManager)
 
-        val ts = serviceUser
-            .createUser("Organizer", "organizer@example.com")
-            .let { check(it is Success); it.value }
-            .let { participant -> serviceEvent.createEvent("Meeting", null, participant.id, SelectionType.MULTIPLE) }
-            .let { check(it is Success); it.value }
-            .let { event -> serviceEvent.createFreeTimeSlot(event.id, LocalDateTime.now(), 60) }
+        val ts =
+            serviceUser
+                .createUser("Organizer", "organizer@example.com")
+                .let {
+                    check(it is Success)
+                    it.value
+                }.let { participant ->
+                    serviceEvent.createEvent(
+                        "Meeting",
+                        null,
+                        participant.id,
+                        SelectionType.MULTIPLE,
+                    )
+                }.let {
+                    check(it is Success)
+                    it.value
+                }.let { event -> serviceEvent.createFreeTimeSlot(event.id, LocalDateTime.now(), 60) }
         assertIs<Success<TimeSlot>>(ts)
 
         // Try to add unknown participant
@@ -129,7 +145,6 @@ class EventServiceTest {
     @ParameterizedTest
     @MethodSource("transactionManagers")
     fun `createUser should create and return a participant`(trxManager: TransactionManager) {
-        val serviceEvent = EventService(trxManager)
         val serviceUser = UserService(trxManager)
 
         val name = "Alice"
@@ -140,7 +155,6 @@ class EventServiceTest {
         assertIs<Success<User>>(result)
         assertEquals(name, result.value.name)
         assertEquals(email, result.value.email)
-
     }
 
     @ParameterizedTest
@@ -148,7 +162,7 @@ class EventServiceTest {
     fun `createUser with already used email should return an error`(trxManager: TransactionManager) {
         val serviceUser = UserService(trxManager)
 
-        serviceUser.createUser("Alice", "alice@example.com",)
+        serviceUser.createUser("Alice", "alice@example.com")
 
         val result: Either<UserError.AlreadyUsedEmailAddress, User> =
             serviceUser.createUser("Mary", "alice@example.com")
@@ -165,21 +179,31 @@ class EventServiceTest {
 
         val startTime = LocalDateTime.now()
         val durationInMinutes = 60
-        val organizer = serviceUser
-            .createUser("Organizer", "organizer@example.com")
-            .let { check(it is Success); it.value }
-        val eventId = serviceEvent
-            .createEvent("Meeting", null, organizer.id, SelectionType.SINGLE)
-            .let { check(it is Success); it.value.id }
-
+        val organizer =
+            serviceUser
+                .createUser("Organizer", "organizer@example.com")
+                .let {
+                    check(it is Success)
+                    it.value
+                }
+        val eventId =
+            serviceEvent
+                .createEvent("Meeting", null, organizer.id, SelectionType.SINGLE)
+                .let {
+                    check(it is Success)
+                    it.value.id
+                }
 
         val result = serviceEvent.createFreeTimeSlot(eventId, startTime, durationInMinutes)
         assertTrue(result is Success)
 
-        val event = serviceEvent.getEventById(eventId).let { check(it is Success); it.value }
+        val event =
+            serviceEvent.getEventById(eventId).let {
+                check(it is Success)
+                it.value
+            }
         val expected = TimeSlotSingle(result.value.id, startTime, durationInMinutes, event, null)
         assertEquals(expected, result.value)
-
     }
 
     @ParameterizedTest
@@ -190,17 +214,29 @@ class EventServiceTest {
 
         val startTime = LocalDateTime.now()
         val durationInMinutes = 60
-        val organizer = serviceUser
-            .createUser("Organizer", "organizer@example.com")
-            .let { check(it is Success); it.value }
-        val eventId = serviceEvent
-            .createEvent("Meeting", null, organizer.id, SelectionType.MULTIPLE)
-            .let { check(it is Success); it.value.id }
+        val organizer =
+            serviceUser
+                .createUser("Organizer", "organizer@example.com")
+                .let {
+                    check(it is Success)
+                    it.value
+                }
+        val eventId =
+            serviceEvent
+                .createEvent("Meeting", null, organizer.id, SelectionType.MULTIPLE)
+                .let {
+                    check(it is Success)
+                    it.value.id
+                }
 
         val result = serviceEvent.createFreeTimeSlot(eventId, startTime, durationInMinutes)
         assertTrue(result is Success)
 
-        val event = serviceEvent.getEventById(eventId).let { check(it is Success); it.value }
+        val event =
+            serviceEvent.getEventById(eventId).let {
+                check(it is Success)
+                it.value
+            }
         val expected = TimeSlotMultiple(result.value.id, startTime, durationInMinutes, event)
         assertEquals(expected, result.value)
     }
@@ -209,7 +245,6 @@ class EventServiceTest {
     @MethodSource("transactionManagers")
     fun `createFreeTimeSlot should return EventNotFound when event is not found`(trxManager: TransactionManager) {
         val serviceEvent = EventService(trxManager)
-        val serviceUser = UserService(trxManager)
 
         val eventId = 1
         val startTime = LocalDateTime.now()
