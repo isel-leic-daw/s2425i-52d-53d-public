@@ -13,7 +13,6 @@ import pt.isel.model.UserInput
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 abstract class AbstractUserControllerTest {
-
     // Injected by the test environment
     @LocalServerPort
     var port: Int = 0
@@ -21,10 +20,11 @@ abstract class AbstractUserControllerTest {
     @Autowired
     private lateinit var trxManager: TransactionManager
 
-    val johnDoe = UserInput(
-        name = "John Doe",
-        email = "john.doe@example.com"
-    )
+    val johnDoe =
+        UserInput(
+            name = "John Doe",
+            email = "john.doe@example.com",
+        )
 
     @BeforeAll
     fun setup() {
@@ -35,10 +35,9 @@ abstract class AbstractUserControllerTest {
             repoUsers.clear()
             repoUsers.createUser(
                 johnDoe.name,
-                johnDoe.email
+                johnDoe.email,
             )
         }
-
     }
 
     @Test
@@ -50,16 +49,21 @@ abstract class AbstractUserControllerTest {
         val rose = UserInput(name = "Rose Mary", email = "rose@example.com")
 
         // Perform the request and assert the results
-        client.post()
+        client
+            .post()
             .uri("/users")
             .contentType(MediaType.APPLICATION_JSON)
             .bodyValue(rose)
             .exchange()
-            .expectStatus().isCreated
-            .expectHeader().contentType(MediaType.APPLICATION_JSON)
+            .expectStatus()
+            .isCreated
+            .expectHeader()
+            .contentType(MediaType.APPLICATION_JSON)
             .expectBody()
-            .jsonPath("name").isEqualTo("Rose Mary")
-            .jsonPath("email").isEqualTo("rose@example.com")
+            .jsonPath("name")
+            .isEqualTo("Rose Mary")
+            .jsonPath("email")
+            .isEqualTo("rose@example.com")
     }
 
     @Test
@@ -68,14 +72,18 @@ abstract class AbstractUserControllerTest {
         val client = WebTestClient.bindToServer().baseUrl("http://localhost:$port/api").build()
 
         // Perform the request and assert the results
-        client.post()
+        client
+            .post()
             .uri("/users")
             .contentType(MediaType.APPLICATION_JSON)
             .bodyValue(johnDoe)
             .exchange()
-            .expectStatus().isEqualTo(409)
-            .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+            .expectStatus()
+            .isEqualTo(409)
+            .expectHeader()
+            .contentType(MediaType.APPLICATION_PROBLEM_JSON)
             .expectBody()
-            .jsonPath("title").isEqualTo("email-already-in-use")
+            .jsonPath("title")
+            .isEqualTo("email-already-in-use")
     }
 }

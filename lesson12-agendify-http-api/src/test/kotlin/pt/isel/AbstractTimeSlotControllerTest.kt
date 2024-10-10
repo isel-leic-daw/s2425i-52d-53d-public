@@ -8,10 +8,10 @@ import org.springframework.test.web.reactive.server.WebTestClient
 import pt.isel.model.TimeSlotInput
 import java.time.LocalDateTime
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 abstract class AbstractTimeSlotControllerTest {
-
     @Autowired
     lateinit var eventService: EventService
 
@@ -34,7 +34,6 @@ abstract class AbstractTimeSlotControllerTest {
         }
     }
 
-
     @Test
     fun `create free time slot`() {
         // Arrange
@@ -45,16 +44,25 @@ abstract class AbstractTimeSlotControllerTest {
         val timeSlotInput = TimeSlotInput(LocalDateTime.now(), 60)
 
         // Act & Assert
-        webTestClient.post()
+        webTestClient
+            .post()
             .uri("/api/events/${event.value.id}/timeslots")
             .bodyValue(timeSlotInput)
             .exchange()
-            .expectStatus().isCreated
-            .expectBody()
-            .jsonPath("id").isNotEmpty
-            .jsonPath("startTime").isEqualTo(timeSlotInput.startTime.toString())
-            .jsonPath("durationInMinutes").isEqualTo(timeSlotInput.durationInMinutes)
+            .expectStatus()
+            .isCreated
+            .expectBody(TimeSlotOutput::class.java)
+            .value {
+                assertEquals(timeSlotInput.startTime, it.startTime)
+                assertEquals(timeSlotInput.durationInMinutes, it.durationInMinutes)
+            }
     }
+
+    data class TimeSlotOutput(
+        val id: Int,
+        val startTime: LocalDateTime,
+        val durationInMinutes: Int,
+    )
 
     @Test
     fun `add participant to time slot`() {
@@ -69,13 +77,17 @@ abstract class AbstractTimeSlotControllerTest {
         check(timeSlot is Success)
 
         // Act & Assert
-        webTestClient.post()
+        webTestClient
+            .post()
             .uri("/api/events/${event.value.id}/timeslots/${timeSlot.value.id}/participants/${guest.value.id}")
             .exchange()
-            .expectStatus().isOk
+            .expectStatus()
+            .isOk
             .expectBody()
-            .jsonPath("owner.id").isEqualTo(guest.value.id)
-            .jsonPath("owner.name").isEqualTo(guest.value.name)
+            .jsonPath("owner.id")
+            .isEqualTo(guest.value.id)
+            .jsonPath("owner.name")
+            .isEqualTo(guest.value.name)
     }
 
     @Test
@@ -90,19 +102,23 @@ abstract class AbstractTimeSlotControllerTest {
         val event = eventService.createEvent("Training", "Employee training", organizer.value.id, SelectionType.SINGLE)
         check(event is Success)
         // Create a timeslot on Event and allocate it to guest 1
-        var timeSlot = eventService
-            .createFreeTimeSlot(event.value.id, LocalDateTime.now(), 90)
-            .let { it as Success }
-            .let { eventService.addParticipantToTimeSlot(it.value.id, guest1.value.id) }
+        val timeSlot =
+            eventService
+                .createFreeTimeSlot(event.value.id, LocalDateTime.now(), 90)
+                .let { it as Success }
+                .let { eventService.addParticipantToTimeSlot(it.value.id, guest1.value.id) }
         check(timeSlot is Success)
 
         // Act & Assert
         // Try to allocate slot to guest 2
-        webTestClient.post()
+        webTestClient
+            .post()
             .uri("/api/events/${event.value.id}/timeslots/${timeSlot.value.id}/participants/${guest2.value.id}")
             .exchange()
-            .expectStatus().isEqualTo(HttpStatus.CONFLICT)
+            .expectStatus()
+            .isEqualTo(HttpStatus.CONFLICT)
             .expectBody()
-            .jsonPath("title").isEqualTo("timeslot-already-allocated")
+            .jsonPath("title")
+            .isEqualTo("timeslot-already-allocated")
     }
 }

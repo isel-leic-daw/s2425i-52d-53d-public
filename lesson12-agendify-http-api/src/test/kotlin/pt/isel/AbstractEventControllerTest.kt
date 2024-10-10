@@ -10,10 +10,9 @@ import pt.isel.model.EventInput
 
 @SpringBootTest(
     properties = ["spring.main.allow-bean-definition-overriding=true"],
-    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
+    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
 )
 abstract class AbstractEventControllerTest {
-
     // Injected by the test environment
     @LocalServerPort
     var port: Int = 0
@@ -34,17 +33,28 @@ abstract class AbstractEventControllerTest {
     @Test
     fun `getAllEvents should return a list of events`() {
         val rose = trxManager.run { repoUsers.createUser("Rose Mary", "rose@example.com") }
-        val event0 = trxManager.run { repoEvents.createEvent("Swim", "Swim for 2K free style", rose, SelectionType.SINGLE) }
-        val event1 = trxManager.run { repoEvents.createEvent("Status Meeting", "Coffee break and more", rose, SelectionType.MULTIPLE) }
+        val event0 =
+            trxManager.run { repoEvents.createEvent("Swim", "Swim for 2K free style", rose, SelectionType.SINGLE) }
+        val event1 =
+            trxManager.run {
+                repoEvents.createEvent(
+                    "Status Meeting",
+                    "Coffee break and more",
+                    rose,
+                    SelectionType.MULTIPLE,
+                )
+            }
 
         // given: an HTTP client
         val client = WebTestClient.bindToServer().baseUrl("http://localhost:$port/api").build()
 
         // Perform GET request and verify response
-        client.get()
+        client
+            .get()
             .uri("/events")
             .exchange()
-            .expectStatus().isOk
+            .expectStatus()
+            .isOk
             .expectBodyList(Event::class.java)
             .hasSize(2)
             .contains(event1, event0)
@@ -53,16 +63,19 @@ abstract class AbstractEventControllerTest {
     @Test
     fun `getEventById should return an event if found`() {
         val rose = trxManager.run { repoUsers.createUser("Rose Mary", "rose@example.com") }
-        val event0 = trxManager.run { repoEvents.createEvent("Swim", "Swim for 2K free style", rose, SelectionType.SINGLE) }
+        val event0 =
+            trxManager.run { repoEvents.createEvent("Swim", "Swim for 2K free style", rose, SelectionType.SINGLE) }
 
         // given: an HTTP client
         val client = WebTestClient.bindToServer().baseUrl("http://localhost:$port/api").build()
 
         // Perform GET request and verify response
-        client.get()
+        client
+            .get()
             .uri("/events/${event0.id}")
             .exchange()
-            .expectStatus().isOk
+            .expectStatus()
+            .isOk
             .expectBody(Event::class.java)
             .isEqualTo(event0)
     }
@@ -73,10 +86,12 @@ abstract class AbstractEventControllerTest {
         val client = WebTestClient.bindToServer().baseUrl("http://localhost:$port/api").build()
 
         // Perform GET request and verify response
-        client.get()
+        client
+            .get()
             .uri("/events/999")
             .exchange()
-            .expectStatus().isNotFound
+            .expectStatus()
+            .isNotFound
     }
 
     @Test
@@ -88,17 +103,18 @@ abstract class AbstractEventControllerTest {
         val client = WebTestClient.bindToServer().baseUrl("http://localhost:$port/api").build()
 
         // Perform POST request and verify response
-        client.post()
+        client
+            .post()
             .uri("/events")
             .bodyValue(event)
             .exchange()
-            .expectStatus().isOk
+            .expectStatus()
+            .isOk
             .expectBody(Event::class.java)
             .also {
                 val eventId = trxManager.run { repoEvents.findAll().last().id }
                 it.isEqualTo(Event(eventId, event.title, event.description, rose, event.selectionType))
             }
-
     }
 
     @Test
@@ -110,10 +126,12 @@ abstract class AbstractEventControllerTest {
         val client = WebTestClient.bindToServer().baseUrl("http://localhost:$port/api").build()
 
         // Perform POST request and verify response
-        client.post()
+        client
+            .post()
             .uri("/events")
             .bodyValue(eventInput)
             .exchange()
-            .expectStatus().isNotFound
+            .expectStatus()
+            .isNotFound
     }
 }

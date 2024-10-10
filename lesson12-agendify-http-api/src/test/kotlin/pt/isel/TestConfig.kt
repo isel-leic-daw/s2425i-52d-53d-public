@@ -13,27 +13,22 @@ class TestApp
 
 @Component
 class TestConfig {
-
-    private val jdbiContext = Jdbi.create(
-        PGSimpleDataSource().apply {
-            setURL(Environment.getDbUrl())
-        },
-    ).configureWithAppRequirements()
+    private val jdbiContext =
+        Jdbi
+            .create(
+                PGSimpleDataSource().apply {
+                    setURL(Environment.getDbUrl())
+                },
+            ).configureWithAppRequirements()
 
     @Bean
-    fun makeJdbi(): Jdbi {
-        return jdbiContext
-    }
+    fun makeJdbi(): Jdbi = jdbiContext
 
     @Bean
     @Profile("jdbi")
-    fun trxManagerJdbi(jdbi: Jdbi): TransactionManager {
-        return TransactionManagerJdbi(jdbi)
-    }
+    fun trxManagerJdbi(jdbi: Jdbi): TransactionManager = TransactionManagerJdbi(jdbi)
 
     @Bean
     @Profile("inMem")
-    fun trxManagerInMem(): TransactionManager {
-        return TransactionManagerInMem()
-    }
+    fun trxManagerInMem(): TransactionManager = TransactionManagerInMem()
 }
