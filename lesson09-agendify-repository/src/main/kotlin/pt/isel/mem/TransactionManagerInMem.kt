@@ -1,6 +1,7 @@
 package pt.isel.mem
 
-import pt.isel.*
+import pt.isel.Transaction
+import pt.isel.TransactionManager
 
 class TransactionManagerInMem : TransactionManager {
     private val repoEvents = RepositoryEventInMem()
@@ -8,8 +9,5 @@ class TransactionManagerInMem : TransactionManager {
     private val repoParticipants = RepositoryParticipantInMem()
     private val repoSlots = RepositoryTimeslotInMem()
 
-
-    override fun <R> run(block: Transaction.() -> R): R {
-        return block(TransactionInMem(repoEvents, repoUsers, repoParticipants, repoSlots))
-    }
+    override fun <R> run(block: Transaction.() -> R): R = block(TransactionInMem(repoEvents, repoUsers, repoParticipants, repoSlots))
 }

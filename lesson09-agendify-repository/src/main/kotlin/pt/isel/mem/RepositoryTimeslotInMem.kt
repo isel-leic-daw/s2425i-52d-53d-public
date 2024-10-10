@@ -1,9 +1,12 @@
 package pt.isel.mem
 
 import jakarta.inject.Named
-import pt.isel.*
+import pt.isel.Event
+import pt.isel.RepositoryTimeSlot
+import pt.isel.TimeSlot
+import pt.isel.TimeSlotMultiple
+import pt.isel.TimeSlotSingle
 import java.time.LocalDateTime
-
 
 /**
  * Naif in memory repository non thread-safe and basic sequential id.
@@ -16,33 +19,24 @@ class RepositoryTimeslotInMem : RepositoryTimeSlot {
     override fun createTimeSlotSingle(
         startTime: LocalDateTime,
         durationInMinutes: Int,
-        event: Event
-    ): TimeSlotSingle {
-        return TimeSlotSingle(timeSlots.count(), startTime, durationInMinutes, event)
+        event: Event,
+    ): TimeSlotSingle =
+        TimeSlotSingle(timeSlots.count(), startTime, durationInMinutes, event)
             .also { timeSlots.add(it) }
-    }
 
     override fun createTimeSlotMultiple(
         startTime: LocalDateTime,
         durationInMinutes: Int,
-        event: Event
-    ): TimeSlotMultiple {
-        return TimeSlotMultiple(timeSlots.count(), startTime, durationInMinutes, event)
+        event: Event,
+    ): TimeSlotMultiple =
+        TimeSlotMultiple(timeSlots.count(), startTime, durationInMinutes, event)
             .also { timeSlots.add(it) }
-    }
 
-    override fun findAllByEvent(event: Event): List<TimeSlot> {
-        return timeSlots.filter { it.event.id == event.id }
-    }
+    override fun findAllByEvent(event: Event): List<TimeSlot> = timeSlots.filter { it.event.id == event.id }
 
+    override fun findById(id: Int): TimeSlot? = timeSlots.firstOrNull { it.id == id }
 
-    override fun findById(id: Int): TimeSlot? {
-        return timeSlots.firstOrNull { it.id == id }
-    }
-
-    override fun findAll(): List<TimeSlot> {
-        return timeSlots.toList()
-    }
+    override fun findAll(): List<TimeSlot> = timeSlots.toList()
 
     override fun save(entity: TimeSlot) {
         timeSlots.removeIf { it.id == entity.id }
@@ -53,5 +47,7 @@ class RepositoryTimeslotInMem : RepositoryTimeSlot {
         timeSlots.removeIf { it.id == id }
     }
 
-    override fun clear() { timeSlots.clear() }
+    override fun clear() {
+        timeSlots.clear()
+    }
 }
