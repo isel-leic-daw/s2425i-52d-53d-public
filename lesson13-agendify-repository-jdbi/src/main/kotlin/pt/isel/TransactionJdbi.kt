@@ -10,7 +10,6 @@ class TransactionJdbi(
     override val repoParticipants = RepositoryParticipantJdbi(handle)
     override val repoSlots = RepositoryTimeSlotJdbi(handle)
 
-
     override fun rollback() {
         handle.rollback()
     }

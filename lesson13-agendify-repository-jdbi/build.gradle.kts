@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm") version "1.9.25"
+    id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
 }
 
 group = "pt.isel"
@@ -24,6 +25,7 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+    environment("DB_URL", "jdbc:postgresql://localhost:5432/db?user=dbuser&password=changeit")
     dependsOn(":lesson13-agendify-repository-jdbi:dbTestsWait")
     finalizedBy(":lesson13-agendify-repository-jdbi:dbTestsDown")
 }
