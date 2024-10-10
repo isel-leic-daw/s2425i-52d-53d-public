@@ -3,7 +3,7 @@ services:
   db-tests:
     container_name: db-tests
     build:
-      context: .
+      context: lesson13-agendify-repository-jdbi
       dockerfile: ./tests/Dockerfile-db-test
     environment:
       - POSTGRES_USER=dbuser
