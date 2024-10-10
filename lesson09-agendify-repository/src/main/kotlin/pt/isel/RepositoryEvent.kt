@@ -8,6 +8,6 @@ interface RepositoryEvent : Repository<Event> {
         title: String,
         description: String?,
         organizer: User,
-        selectionType: SelectionType
-    ) : Event
+        selectionType: SelectionType,
+    ): Event
 }
