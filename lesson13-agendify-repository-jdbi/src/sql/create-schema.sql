@@ -4,10 +4,18 @@ CREATE SCHEMA IF NOT EXISTS dbo;
 -- Create table for users in the dbo schema
 CREATE TABLE dbo.users
 (
-    id    SERIAL PRIMARY KEY,
-    name  VARCHAR(255)        NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password_validation VARCHAR(255) NOT NULL
+    id                  SERIAL PRIMARY KEY,
+    name                VARCHAR(255)        NOT NULL,
+    email               VARCHAR(255) UNIQUE NOT NULL,
+    password_validation VARCHAR(255)        NOT NULL
+);
+
+create table dbo.Tokens
+(
+    token_validation VARCHAR(256) primary key,
+    user_id          int references dbo.Users (id),
+    created_at       bigint not null,
+    last_used_at     bigint not null
 );
 
 -- Create table for events in the dbo schema
@@ -25,9 +33,9 @@ CREATE TABLE dbo.events
 CREATE TABLE dbo.time_slots
 (
     id                  SERIAL PRIMARY KEY,
-    start_time          TIMESTAMP   NOT NULL,
-    duration_in_minutes INT         NOT NULL,
-    event_id            INT         NOT NULL,
+    start_time          TIMESTAMP NOT NULL,
+    duration_in_minutes INT       NOT NULL,
+    event_id            INT       NOT NULL,
     FOREIGN KEY (event_id) REFERENCES dbo.events (id)
 );
 

@@ -5,7 +5,6 @@ plugins {
     id("io.spring.dependency-management")
 }
 
-
 group = "pt.isel"
 version = "0.1.0-SNAPSHOT"
 

@@ -8,7 +8,9 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
+import pt.isel.model.UserCreateTokenOutputModel
 import pt.isel.model.UserInput
+import kotlin.test.assertTrue
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -43,6 +45,103 @@ abstract class AbstractUserControllerTest {
     }
 
     @Test
+    fun `can create an user, obtain a token, and access user home, and logout`() {
+        // given: an HTTP client
+        val client = WebTestClient.bindToServer().baseUrl("http://localhost:$port/api").build()
+
+        // and: a user
+        val name = "John Rambo"
+        val email = "john@rambo.vcom"
+        val password = "badGuy"
+
+        // when: creating an user
+        // then: the response is a 201 with a proper Location header
+        client
+            .post()
+            .uri("/users")
+            .bodyValue(
+                mapOf(
+                    "name" to name,
+                    "email" to email,
+                    "password" to password,
+                ),
+            ).exchange()
+            .expectStatus()
+            .isCreated
+            .expectHeader()
+            .value("location") {
+                assertTrue(it.startsWith("/api/users/"))
+            }
+
+        // when: creating a token
+        // then: the response is a 200
+        val result =
+            client
+                .post()
+                .uri("/users/token")
+                .bodyValue(
+                    mapOf(
+                        "email" to email,
+                        "password" to password,
+                    ),
+                ).exchange()
+                .expectStatus()
+                .isOk
+                .expectBody(UserCreateTokenOutputModel::class.java)
+                .returnResult()
+                .responseBody!!
+
+        // when: getting the user home with a valid token
+        // then: the response is a 200 with the proper representation
+        client
+            .get()
+            .uri("/me")
+            .header("Authorization", "Bearer ${result.token}")
+            .exchange()
+            .expectStatus()
+            .isOk
+            .expectBody()
+            .jsonPath("email")
+            .isEqualTo(email)
+            .jsonPath("name")
+            .isEqualTo(name)
+
+        // when: getting the user home with an invalid token
+        // then: the response is a 401 with the proper problem
+        client
+            .get()
+            .uri("/me")
+            .header("Authorization", "Bearer ${result.token}-invalid")
+            .exchange()
+            .expectStatus()
+            .isUnauthorized
+            .expectHeader()
+            .valueEquals("WWW-Authenticate", "bearer")
+
+        // when: revoking the token
+        // then: response is a 200
+        client
+            .post()
+            .uri("/logout")
+            .header("Authorization", "Bearer ${result.token}")
+            .exchange()
+            .expectStatus()
+            .isOk
+
+        // when: getting the user home with the revoked token
+        // then: response is a 401
+        client
+            .get()
+            .uri("/me")
+            .header("Authorization", "Bearer ${result.token}")
+            .exchange()
+            .expectStatus()
+            .isUnauthorized
+            .expectHeader()
+            .valueEquals("WWW-Authenticate", "bearer")
+    }
+
+    @Test
     fun `should create a participant and return 201 status`() {
         // given: an HTTP client
         val client = WebTestClient.bindToServer().baseUrl("http://localhost:$port/api").build()
@@ -60,12 +159,9 @@ abstract class AbstractUserControllerTest {
             .expectStatus()
             .isCreated
             .expectHeader()
-            .contentType(MediaType.APPLICATION_JSON)
-            .expectBody()
-            .jsonPath("name")
-            .isEqualTo("Rose Mary")
-            .jsonPath("email")
-            .isEqualTo("rose@example.com")
+            .value("location") {
+                assertTrue(it.startsWith("/api/users/"))
+            }
     }
 
     @Test

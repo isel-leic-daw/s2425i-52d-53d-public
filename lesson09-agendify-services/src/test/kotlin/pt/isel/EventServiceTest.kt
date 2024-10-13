@@ -12,6 +12,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.minutes
 
 class EventServiceTest {
     companion object {
@@ -38,13 +41,34 @@ class EventServiceTest {
                 repoUsers.clear()
             }
         }
+
+        private fun createUserService(
+            trxManager: TransactionManager,
+            testClock: TestClock,
+            tokenTtl: Duration = 30.days,
+            tokenRollingTtl: Duration = 30.minutes,
+            maxTokensPerUser: Int = 3,
+        ) = UserService(
+            trxManager,
+            UsersDomain(
+                BCryptPasswordEncoder(),
+                Sha256TokenEncoder(),
+                UsersDomainConfig(
+                    tokenSizeInBytes = 256 / 8,
+                    tokenTtl = tokenTtl,
+                    tokenRollingTtl,
+                    maxTokensPerUser = maxTokensPerUser,
+                ),
+            ),
+            testClock,
+        )
     }
 
     @ParameterizedTest
     @MethodSource("transactionManagers")
     fun `addParticipantToTimeSlot should add participant to a time slot`(trxManager: TransactionManager) {
         val serviceEvent = EventService(trxManager)
-        val serviceUser = UserService(trxManager, UsersDomain(BCryptPasswordEncoder()))
+        val serviceUser = createUserService(trxManager, TestClock())
 
         val organizer = serviceUser.createUser("John", "john@example.com", "camafeuAtleta")
         assertIs<Success<User>>(organizer)
@@ -74,7 +98,7 @@ class EventServiceTest {
         trxManager: TransactionManager,
     ) {
         val serviceEvent = EventService(trxManager)
-        val serviceUser = UserService(trxManager, UsersDomain(BCryptPasswordEncoder()))
+        val serviceUser = createUserService(trxManager, TestClock())
 
         val organizer =
             serviceUser
@@ -115,7 +139,7 @@ class EventServiceTest {
     @MethodSource("transactionManagers")
     fun `addParticipantToTimeSlot should return UserNotFound when participant is not found`(trxManager: TransactionManager) {
         val serviceEvent = EventService(trxManager)
-        val serviceUser = UserService(trxManager, UsersDomain(BCryptPasswordEncoder()))
+        val serviceUser = createUserService(trxManager, TestClock())
 
         val ts =
             serviceUser
@@ -146,8 +170,7 @@ class EventServiceTest {
     @ParameterizedTest
     @MethodSource("transactionManagers")
     fun `createUser should create and return a participant`(trxManager: TransactionManager) {
-        val usersDomain = UsersDomain(BCryptPasswordEncoder())
-        val serviceUser = UserService(trxManager, usersDomain)
+        val serviceUser = createUserService(trxManager, TestClock())
 
         val name = "Alice"
         val email = "alice@example.com"
@@ -158,13 +181,13 @@ class EventServiceTest {
         assertIs<Success<User>>(result)
         assertEquals(name, result.value.name)
         assertEquals(email, result.value.email)
-        assertTrue { usersDomain.validatePassword(pass, result.value.passwordValidation) }
+        assertTrue { serviceUser.usersDomain.validatePassword(pass, result.value.passwordValidation) }
     }
 
     @ParameterizedTest
     @MethodSource("transactionManagers")
     fun `createUser with already used email should return an error`(trxManager: TransactionManager) {
-        val serviceUser = UserService(trxManager, UsersDomain(BCryptPasswordEncoder()))
+        val serviceUser = createUserService(trxManager, TestClock())
 
         serviceUser.createUser("Alice", "alice@example.com", "camafeuAtleta")
 
@@ -179,7 +202,7 @@ class EventServiceTest {
     @MethodSource("transactionManagers")
     fun `createFreeTimeSlot should create a free time slot based on event selection type SINGLE`(trxManager: TransactionManager) {
         val serviceEvent = EventService(trxManager)
-        val serviceUser = UserService(trxManager, UsersDomain(BCryptPasswordEncoder()))
+        val serviceUser = createUserService(trxManager, TestClock())
 
         val startTime = LocalDateTime.now()
         val durationInMinutes = 60
@@ -214,7 +237,7 @@ class EventServiceTest {
     @MethodSource("transactionManagers")
     fun `createFreeTimeSlot should create a free time slot based on event selection type MULTIPLE`(trxManager: TransactionManager) {
         val serviceEvent = EventService(trxManager)
-        val serviceUser = UserService(trxManager, UsersDomain(BCryptPasswordEncoder()))
+        val serviceUser = createUserService(trxManager, TestClock())
 
         val startTime = LocalDateTime.now()
         val durationInMinutes = 60
