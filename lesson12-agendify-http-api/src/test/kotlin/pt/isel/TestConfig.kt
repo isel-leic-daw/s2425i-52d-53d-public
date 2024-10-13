@@ -5,6 +5,7 @@ import org.postgresql.ds.PGSimpleDataSource
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Profile
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Component
 import pt.isel.mem.TransactionManagerInMem
 
@@ -20,6 +21,9 @@ class TestConfig {
                     setURL(Environment.getDbUrl())
                 },
             ).configureWithAppRequirements()
+
+    @Bean
+    fun passwordEncoder() = BCryptPasswordEncoder()
 
     @Bean
     fun makeJdbi(): Jdbi = jdbiContext

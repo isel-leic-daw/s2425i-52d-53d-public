@@ -33,4 +33,6 @@ sealed class Problem(
 
     data object UserIsAlreadyParticipantInTimeSlot :
         Problem(URI("$PROBLEM_URI_PATH/user-is-already-participant-in-time-slot"))
+
+    data object InsecurePassword : Problem(URI("$PROBLEM_URI_PATH/insecure-password"))
 }

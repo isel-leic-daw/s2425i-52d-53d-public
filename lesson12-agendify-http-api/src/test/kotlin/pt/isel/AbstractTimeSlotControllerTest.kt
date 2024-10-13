@@ -37,7 +37,7 @@ abstract class AbstractTimeSlotControllerTest {
     @Test
     fun `create free time slot`() {
         // Arrange
-        val organizer = userService.createUser("John", "john@example.com")
+        val organizer = userService.createUser("John", "john@example.com", "camafeuAtleta")
         check(organizer is Success)
         val event = eventService.createEvent("Meeting", "Team meeting", organizer.value.id, SelectionType.SINGLE)
         check(event is Success)
@@ -67,9 +67,9 @@ abstract class AbstractTimeSlotControllerTest {
     @Test
     fun `add participant to time slot`() {
         // Arrange
-        val organizer = userService.createUser("John", "john@example.com")
+        val organizer = userService.createUser("John", "john@example.com", "camafeuAtleta")
         check(organizer is Success)
-        val guest = userService.createUser("Jane", "jane@example.com")
+        val guest = userService.createUser("Jane", "jane@example.com", "rainhaDaSelva")
         check(guest is Success)
         val event = eventService.createEvent("Workshop", "Tech workshop", organizer.value.id, SelectionType.SINGLE)
         check(event is Success)
@@ -93,11 +93,11 @@ abstract class AbstractTimeSlotControllerTest {
     @Test
     fun `fail to add participant to already allocated single time slot`() {
         // Arrange
-        val organizer = userService.createUser("John", "john@example.com")
+        val organizer = userService.createUser("John", "john@example.com", "camafeuAtleta")
         check(organizer is Success)
-        val guest1 = userService.createUser("Jane", "jane@example.com")
+        val guest1 = userService.createUser("Jane", "jane@example.com", "rainhaDaSelva")
         check(guest1 is Success)
-        val guest2 = userService.createUser("Paul", "paul@example.com")
+        val guest2 = userService.createUser("Paul", "paul@example.com", "saudDoLibano")
         check(guest2 is Success)
         val event = eventService.createEvent("Training", "Employee training", organizer.value.id, SelectionType.SINGLE)
         check(event is Success)

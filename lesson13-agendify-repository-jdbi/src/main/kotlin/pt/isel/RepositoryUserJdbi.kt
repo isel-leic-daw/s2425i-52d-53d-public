@@ -50,22 +50,24 @@ class RepositoryUserJdbi(
     override fun createUser(
         name: String,
         email: String,
+        passwordValidation: PasswordValidationInfo,
     ): User {
         val id =
             handle
                 .createUpdate(
                     """
-            INSERT INTO dbo.users (name, email) 
-            VALUES (:name, :email)
+            INSERT INTO dbo.users (name, email, password_validation) 
+            VALUES (:name, :email, :password_validation)
             RETURNING id
             """,
                 ).bind("name", name)
                 .bind("email", email)
+                .bind("password_validation", passwordValidation.validationInfo)
                 .executeAndReturnGeneratedKeys()
                 .mapTo(Int::class.java)
                 .one()
 
-        return User(id, name, email)
+        return User(id, name, email, passwordValidation)
     }
 
     override fun findByEmail(email: String): User? =
@@ -86,6 +88,7 @@ class RepositoryUserJdbi(
                 id = rs.getInt("id"),
                 name = rs.getString("name"),
                 email = rs.getString("email"),
+                passwordValidation = PasswordValidationInfo(rs.getString("password_validation")),
             )
     }
 }

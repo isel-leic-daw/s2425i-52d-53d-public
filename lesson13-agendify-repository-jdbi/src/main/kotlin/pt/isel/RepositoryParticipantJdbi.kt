@@ -6,16 +6,21 @@ import java.sql.ResultSet
 class RepositoryParticipantJdbi(
     private val handle: Handle,
 ) : RepositoryParticipant {
+    private val repoUsers = RepositoryUserJdbi(handle)
+
     override fun findById(id: Int): Participant? =
         handle
             .createQuery(
                 """
-            SELECT p.*, u.*, ts.*, e.* FROM dbo.participants p
-            JOIN dbo.users u ON p.user_id = u.id
-            JOIN dbo.time_slots ts ON p.time_slot_multiple_id = ts.id
-            JOIN dbo.events e ON ts.event_id = e.id
-            WHERE p.id = :id
-            """,
+                SELECT p.id, u.id as user_id, u.name, u.email, ts.id as time_slot_id, ts.start_time, 
+                       ts.duration_in_minutes, e.id as event_id, e.title, e.description, e.organizer_id, 
+                       e.selection_type
+                FROM dbo.participants p
+                JOIN dbo.users u ON p.user_id = u.id
+                JOIN dbo.time_slots ts ON p.time_slot_multiple_id = ts.id
+                JOIN dbo.events e ON ts.event_id = e.id
+                WHERE p.id = :id
+                """,
             ).bind("id", id)
             .map { rs, _ -> mapRowToParticipant(rs) }
             .findOne()
@@ -25,11 +30,14 @@ class RepositoryParticipantJdbi(
         handle
             .createQuery(
                 """
-            SELECT p.*, u.*, ts.*, e.* FROM dbo.participants p
-            JOIN dbo.users u ON p.user_id = u.id
-            JOIN dbo.time_slots ts ON p.time_slot_multiple_id = ts.id
-            JOIN dbo.events e ON ts.event_id = e.id
-            """,
+                SELECT p.id, u.id as user_id, u.name, u.email, ts.id as time_slot_id, ts.start_time, 
+                       ts.duration_in_minutes, e.id as event_id, e.title, e.description, e.organizer_id, 
+                       e.selection_type
+                FROM dbo.participants p
+                JOIN dbo.users u ON p.user_id = u.id
+                JOIN dbo.time_slots ts ON p.time_slot_multiple_id = ts.id
+                JOIN dbo.events e ON ts.event_id = e.id
+                """,
             ).map { rs, _ -> mapRowToParticipant(rs) }
             .list()
 
@@ -62,20 +70,24 @@ class RepositoryParticipantJdbi(
         user: User,
         slot: TimeSlotMultiple,
     ): Participant {
-        val id =
+        val participantId =
             handle
                 .createUpdate(
                     """
-            INSERT INTO dbo.participants (user_id, time_slot_multiple_id) 
-            VALUES (:user_id, :slot_id)
-            """,
-                ).bind("user_id", user.id)
-                .bind("slot_id", slot.id)
+                INSERT INTO dbo.participants (user_id, time_slot_multiple_id)
+                VALUES (:userId, :timeSlotId)
+                """,
+                ).bind("userId", user.id)
+                .bind("timeSlotId", slot.id)
                 .executeAndReturnGeneratedKeys()
                 .mapTo(Int::class.java)
                 .one()
 
-        return Participant(id, user, slot)
+        return Participant(
+            id = participantId,
+            user = user,
+            slot = slot,
+        )
     }
 
     override fun findByEmail(
@@ -114,20 +126,23 @@ class RepositoryParticipantJdbi(
             .list()
 
     private fun mapRowToParticipant(rs: ResultSet): Participant {
-        // Create the User
-        val user = User(rs.getInt("user_id"), rs.getString("name"), rs.getString("email"))
-
-        // Create the Event
+        val user =
+            User(
+                id = rs.getInt("user_id"),
+                name = rs.getString("name"),
+                email = rs.getString("email"),
+                PasswordValidationInfo(rs.getString("password_validation")),
+            )
+        val organizer = repoUsers.findById(rs.getInt("organizer_id"))
+        requireNotNull(organizer)
         val event =
             Event(
                 id = rs.getInt("event_id"),
                 title = rs.getString("title"),
                 description = rs.getString("description"),
-                organizer = User(rs.getInt("user_id"), rs.getString("name"), rs.getString("email")),
+                organizer = organizer,
                 selectionType = SelectionType.valueOf(rs.getString("selection_type")),
             )
-
-        // Create the TimeSlotMultiple
         val timeSlot =
             TimeSlotMultiple(
                 id = rs.getInt("time_slot_multiple_id"),
@@ -135,8 +150,6 @@ class RepositoryParticipantJdbi(
                 durationInMinutes = rs.getInt("duration_in_minutes"),
                 event = event,
             )
-
-        // Return the Participant
-        return Participant(rs.getInt("id"), user, timeSlot)
+        return Participant(id = rs.getInt("id"), user = user, slot = timeSlot)
     }
 }

@@ -5,6 +5,10 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.time.LocalDateTime
+import kotlin.math.abs
+import kotlin.random.Random
+
+private fun newTokenValidationData() = "token-${abs(Random.nextLong())}"
 
 class AgendifyTest {
     private val organizer =
@@ -12,6 +16,7 @@ class AgendifyTest {
             1,
             "Alice",
             "alice@example.com",
+            PasswordValidationInfo(newTokenValidationData()),
         )
     private val eventSingle =
         Event(
@@ -45,7 +50,7 @@ class AgendifyTest {
 
     @Test
     fun `test adding a participant to a TimeSlotSingle`() {
-        val owner = User(2, "Bob", "bob@example.com")
+        val owner = User(2, "Bob", "bob@example.com", PasswordValidationInfo(newTokenValidationData()))
 
         val slot =
             TimeSlotSingle(
@@ -56,12 +61,12 @@ class AgendifyTest {
                 owner,
             )
 
-        assertEquals(owner.name, "Bob")
+        assertEquals(slot.owner?.name, "Bob")
     }
 
     @Test
     fun `test removing a participant from a TimeSlotSingle`() {
-        val participant = User(2, "Bob", "bob@example.com")
+        val participant = User(2, "Bob", "bob@example.com", PasswordValidationInfo(newTokenValidationData()))
         val slot =
             TimeSlotSingle(
                 id = 1,
@@ -78,8 +83,8 @@ class AgendifyTest {
 
     @Test
     fun `test trying to add a participant when TimeSlotSingle already has an owner`() {
-        val participant1 = User(2, "Bob", "bob@example.com")
-        val participant2 = User(3, "Charlie", "charlie@example.com")
+        val participant1 = User(2, "Bob", "bob@example.com", PasswordValidationInfo(newTokenValidationData()))
+        val participant2 = User(3, "Charlie", "charlie@example.com", PasswordValidationInfo(newTokenValidationData()))
         val slot =
             TimeSlotSingle(
                 id = 1,
@@ -105,7 +110,8 @@ class AgendifyTest {
                 durationInMinutes = 60,
                 eventMultiple,
             )
-        val participant = Participant(2, User(2, "Bob", "bob@example.com"), slot)
+        val participant =
+            Participant(2, User(2, "Bob", "bob@example.com", PasswordValidationInfo(newTokenValidationData())), slot)
 
         assertEquals(participant.slot.id, slot.id)
     }

@@ -24,6 +24,7 @@ abstract class AbstractUserControllerTest {
         UserInput(
             name = "John Doe",
             email = "john.doe@example.com",
+            password = "password",
         )
 
     @BeforeAll
@@ -36,6 +37,7 @@ abstract class AbstractUserControllerTest {
             repoUsers.createUser(
                 johnDoe.name,
                 johnDoe.email,
+                PasswordValidationInfo(newTokenValidationData()),
             )
         }
     }
@@ -46,7 +48,7 @@ abstract class AbstractUserControllerTest {
         val client = WebTestClient.bindToServer().baseUrl("http://localhost:$port/api").build()
 
         // and: a random participant
-        val rose = UserInput(name = "Rose Mary", email = "rose@example.com")
+        val rose = UserInput(name = "Rose Mary", email = "rose@example.com", "rainhaDoCaisSodre")
 
         // Perform the request and assert the results
         client

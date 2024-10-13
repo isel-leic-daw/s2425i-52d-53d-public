@@ -20,7 +20,7 @@ class UserController(
     ): ResponseEntity<*> {
         val result: Either<UserError, User> =
             userService
-                .createUser(participantInput.name, participantInput.email)
+                .createUser(participantInput.name, participantInput.email, participantInput.password)
 
         return when (result) {
             is Success -> ResponseEntity.status(HttpStatus.CREATED).body(result.value)
@@ -29,6 +29,11 @@ class UserController(
                     is UserError.AlreadyUsedEmailAddress ->
                         Problem.EmailAlreadyInUse.response(
                             HttpStatus.CONFLICT,
+                        )
+
+                    UserError.InsecurePassword ->
+                        Problem.InsecurePassword.response(
+                            HttpStatus.BAD_REQUEST,
                         )
                 }
         }

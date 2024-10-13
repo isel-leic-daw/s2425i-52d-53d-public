@@ -4,8 +4,12 @@ import pt.isel.mem.RepositoryEventInMem
 import pt.isel.mem.RepositoryTimeslotInMem
 import pt.isel.mem.RepositoryUserInMem
 import java.time.LocalDateTime
+import kotlin.math.abs
+import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+
+private fun newTokenValidationData() = "token-${abs(Random.nextLong())}"
 
 class RepositoryTimeSlotTest {
     private val repoUsers =
@@ -13,6 +17,7 @@ class RepositoryTimeSlotTest {
             it.createUser(
                 "Alice",
                 "alice@example.com",
+                PasswordValidationInfo(newTokenValidationData()),
             )
         }
     private val repoTimeSlots = RepositoryTimeslotInMem()

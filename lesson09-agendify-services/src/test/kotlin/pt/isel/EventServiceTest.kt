@@ -4,6 +4,7 @@ import org.jdbi.v3.core.Jdbi
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.postgresql.ds.PGSimpleDataSource
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import pt.isel.mem.TransactionManagerInMem
 import java.time.LocalDateTime
 import java.util.stream.Stream
@@ -43,9 +44,9 @@ class EventServiceTest {
     @MethodSource("transactionManagers")
     fun `addParticipantToTimeSlot should add participant to a time slot`(trxManager: TransactionManager) {
         val serviceEvent = EventService(trxManager)
-        val serviceUser = UserService(trxManager)
+        val serviceUser = UserService(trxManager, UsersDomain(BCryptPasswordEncoder()))
 
-        val organizer = serviceUser.createUser("John", "john@example.com")
+        val organizer = serviceUser.createUser("John", "john@example.com", "camafeuAtleta")
         assertIs<Success<User>>(organizer)
 
         val ev =
@@ -73,11 +74,11 @@ class EventServiceTest {
         trxManager: TransactionManager,
     ) {
         val serviceEvent = EventService(trxManager)
-        val serviceUser = UserService(trxManager)
+        val serviceUser = UserService(trxManager, UsersDomain(BCryptPasswordEncoder()))
 
         val organizer =
             serviceUser
-                .createUser("John", "john@example.com")
+                .createUser("John", "john@example.com", "janitaSalome")
                 .let {
                     check(it is Success)
                     it.value
@@ -103,7 +104,7 @@ class EventServiceTest {
             assertEquals(name, organizer.name)
             assertEquals(email, organizer.email)
         }
-        val otherUser = serviceUser.createUser("john", "john@rambo.com")
+        val otherUser = serviceUser.createUser("john", "john@rambo.com", "camafeuAtleta")
         assertIs<Success<User>>(otherUser)
         val res = serviceEvent.addParticipantToTimeSlot(ts.value.id, otherUser.value.id)
         assertIs<Failure<EventError>>(res)
@@ -114,11 +115,11 @@ class EventServiceTest {
     @MethodSource("transactionManagers")
     fun `addParticipantToTimeSlot should return UserNotFound when participant is not found`(trxManager: TransactionManager) {
         val serviceEvent = EventService(trxManager)
-        val serviceUser = UserService(trxManager)
+        val serviceUser = UserService(trxManager, UsersDomain(BCryptPasswordEncoder()))
 
         val ts =
             serviceUser
-                .createUser("Organizer", "organizer@example.com")
+                .createUser("Organizer", "organizer@example.com", "camafeuAtleta")
                 .let {
                     check(it is Success)
                     it.value
@@ -145,27 +146,30 @@ class EventServiceTest {
     @ParameterizedTest
     @MethodSource("transactionManagers")
     fun `createUser should create and return a participant`(trxManager: TransactionManager) {
-        val serviceUser = UserService(trxManager)
+        val usersDomain = UsersDomain(BCryptPasswordEncoder())
+        val serviceUser = UserService(trxManager, usersDomain)
 
         val name = "Alice"
         val email = "alice@example.com"
+        val pass = "camafeuAtleta"
 
-        val result = serviceUser.createUser(name, email)
+        val result = serviceUser.createUser(name, email, pass)
 
         assertIs<Success<User>>(result)
         assertEquals(name, result.value.name)
         assertEquals(email, result.value.email)
+        assertTrue { usersDomain.validatePassword(pass, result.value.passwordValidation) }
     }
 
     @ParameterizedTest
     @MethodSource("transactionManagers")
     fun `createUser with already used email should return an error`(trxManager: TransactionManager) {
-        val serviceUser = UserService(trxManager)
+        val serviceUser = UserService(trxManager, UsersDomain(BCryptPasswordEncoder()))
 
-        serviceUser.createUser("Alice", "alice@example.com")
+        serviceUser.createUser("Alice", "alice@example.com", "camafeuAtleta")
 
-        val result: Either<UserError.AlreadyUsedEmailAddress, User> =
-            serviceUser.createUser("Mary", "alice@example.com")
+        val result: Either<UserError, User> =
+            serviceUser.createUser("Mary", "alice@example.com", "janitaSalome")
 
         assertIs<Failure<UserError>>(result)
         assertIs<UserError>(result.value)
@@ -175,13 +179,13 @@ class EventServiceTest {
     @MethodSource("transactionManagers")
     fun `createFreeTimeSlot should create a free time slot based on event selection type SINGLE`(trxManager: TransactionManager) {
         val serviceEvent = EventService(trxManager)
-        val serviceUser = UserService(trxManager)
+        val serviceUser = UserService(trxManager, UsersDomain(BCryptPasswordEncoder()))
 
         val startTime = LocalDateTime.now()
         val durationInMinutes = 60
         val organizer =
             serviceUser
-                .createUser("Organizer", "organizer@example.com")
+                .createUser("Organizer", "organizer@example.com", "camafeuAtleta")
                 .let {
                     check(it is Success)
                     it.value
@@ -210,13 +214,13 @@ class EventServiceTest {
     @MethodSource("transactionManagers")
     fun `createFreeTimeSlot should create a free time slot based on event selection type MULTIPLE`(trxManager: TransactionManager) {
         val serviceEvent = EventService(trxManager)
-        val serviceUser = UserService(trxManager)
+        val serviceUser = UserService(trxManager, UsersDomain(BCryptPasswordEncoder()))
 
         val startTime = LocalDateTime.now()
         val durationInMinutes = 60
         val organizer =
             serviceUser
-                .createUser("Organizer", "organizer@example.com")
+                .createUser("Organizer", "organizer@example.com", "camafeuAtleta")
                 .let {
                     check(it is Success)
                     it.value

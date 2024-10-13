@@ -1,6 +1,7 @@
 plugins {
     kotlin("jvm") version "1.9.25"
     id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
+    id("com.adarshr.test-logger") version "4.0.0"
 }
 
 group = "pt.isel"

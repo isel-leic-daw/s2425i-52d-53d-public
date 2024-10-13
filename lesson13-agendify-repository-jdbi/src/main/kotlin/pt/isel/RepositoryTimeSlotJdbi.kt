@@ -138,6 +138,7 @@ class RepositoryTimeSlotJdbi(
                     id = rs.getInt("owner_user_id"),
                     name = rs.getString("owner_name"),
                     email = rs.getString("owner_email"),
+                    passwordValidation = PasswordValidationInfo(rs.getString("password_validation")),
                 )
             } else {
                 null
@@ -200,7 +201,8 @@ class RepositoryTimeSlotJdbi(
             .createQuery(
                 """
                 SELECT ts.id as time_slot_id, ts.start_time, ts.duration_in_minutes, ts.event_id, 
-                       tss.owner_id, u.id as owner_user_id, u.name as owner_name, u.email as owner_email
+                       tss.owner_id, u.id as owner_user_id, u.name as owner_name, u.email as owner_email,
+                       u.password_validation as password_validation
                 FROM dbo.time_slots ts
                 LEFT JOIN dbo.time_slot_singles tss ON ts.id = tss.time_slot_id
                 LEFT JOIN dbo.users u ON tss.owner_id = u.id
@@ -238,7 +240,8 @@ class RepositoryTimeSlotJdbi(
                 .createQuery(
                     """
                 SELECT ts.id as time_slot_id, ts.start_time, ts.duration_in_minutes, ts.event_id, 
-                       tss.owner_id, u.id as owner_user_id, u.name as owner_name, u.email as owner_email
+                       tss.owner_id, u.id as owner_user_id, u.name as owner_name, u.email as owner_email,
+                       u.password_validation as password_validation
                 FROM dbo.time_slots ts
                 LEFT JOIN dbo.time_slot_singles tss ON ts.id = tss.time_slot_id
                 LEFT JOIN dbo.users u ON tss.owner_id = u.id

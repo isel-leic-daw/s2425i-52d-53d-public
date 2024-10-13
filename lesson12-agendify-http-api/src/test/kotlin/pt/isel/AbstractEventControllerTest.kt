@@ -7,6 +7,10 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.test.web.reactive.server.WebTestClient
 import pt.isel.model.EventInput
+import kotlin.math.abs
+import kotlin.random.Random
+
+fun newTokenValidationData() = "token-${abs(Random.nextLong())}"
 
 @SpringBootTest(
     properties = ["spring.main.allow-bean-definition-overriding=true"],
@@ -32,7 +36,14 @@ abstract class AbstractEventControllerTest {
 
     @Test
     fun `getAllEvents should return a list of events`() {
-        val rose = trxManager.run { repoUsers.createUser("Rose Mary", "rose@example.com") }
+        val rose =
+            trxManager.run {
+                repoUsers.createUser(
+                    "Rose Mary",
+                    "rose@example.com",
+                    PasswordValidationInfo(newTokenValidationData()),
+                )
+            }
         val event0 =
             trxManager.run { repoEvents.createEvent("Swim", "Swim for 2K free style", rose, SelectionType.SINGLE) }
         val event1 =
@@ -62,7 +73,14 @@ abstract class AbstractEventControllerTest {
 
     @Test
     fun `getEventById should return an event if found`() {
-        val rose = trxManager.run { repoUsers.createUser("Rose Mary", "rose@example.com") }
+        val rose =
+            trxManager.run {
+                repoUsers.createUser(
+                    "Rose Mary",
+                    "rose@example.com",
+                    PasswordValidationInfo(newTokenValidationData()),
+                )
+            }
         val event0 =
             trxManager.run { repoEvents.createEvent("Swim", "Swim for 2K free style", rose, SelectionType.SINGLE) }
 
@@ -96,7 +114,14 @@ abstract class AbstractEventControllerTest {
 
     @Test
     fun `createEvent should return 201 if event created successfully`() {
-        val rose = trxManager.run { repoUsers.createUser("Rose Mary", "rose@example.com") }
+        val rose =
+            trxManager.run {
+                repoUsers.createUser(
+                    "Rose Mary",
+                    "rose@example.com",
+                    PasswordValidationInfo(newTokenValidationData()),
+                )
+            }
         val event = EventInput("Fun", "Hang around and have fun.", rose.id, SelectionType.MULTIPLE)
 
         // given: an HTTP client

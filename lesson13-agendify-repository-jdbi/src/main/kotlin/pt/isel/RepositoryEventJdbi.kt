@@ -81,7 +81,13 @@ class RepositoryEventJdbi(
     }
 
     private fun mapRowToEvent(rs: ResultSet): Event {
-        val organizer = User(rs.getInt("organizer_id"), rs.getString("name"), rs.getString("email"))
+        val organizer =
+            User(
+                rs.getInt("organizer_id"),
+                rs.getString("name"),
+                rs.getString("email"),
+                PasswordValidationInfo(rs.getString("password_validation")),
+            )
         return Event(
             id = rs.getInt("id"),
             title = rs.getString("title"),

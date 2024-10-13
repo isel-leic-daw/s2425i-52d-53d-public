@@ -6,7 +6,11 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.postgresql.ds.PGSimpleDataSource
 import java.time.LocalDateTime
+import kotlin.math.abs
+import kotlin.random.Random
 import kotlin.test.assertEquals
+
+private fun newTokenValidationData() = "token-${abs(Random.nextLong())}"
 
 class RepositoryJdbiTests {
     companion object {
@@ -38,6 +42,7 @@ class RepositoryJdbiTests {
                 RepositoryUserJdbi(handle).createUser(
                     "Alice",
                     "alice@example.com",
+                    PasswordValidationInfo(newTokenValidationData()),
                 )
             val repoEvents =
                 RepositoryEventJdbi(handle).also {
@@ -60,6 +65,7 @@ class RepositoryJdbiTests {
                     it.createUser(
                         "Alice",
                         "alice@example.com",
+                        PasswordValidationInfo(newTokenValidationData()),
                     )
                 }
             val repoTimeSlots = RepositoryTimeSlotJdbi(handle)

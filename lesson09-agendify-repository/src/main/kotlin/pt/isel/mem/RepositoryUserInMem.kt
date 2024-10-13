@@ -1,5 +1,6 @@
 package pt.isel.mem
 
+import pt.isel.PasswordValidationInfo
 import pt.isel.RepositoryUser
 import pt.isel.User
 
@@ -9,8 +10,9 @@ class RepositoryUserInMem : RepositoryUser {
     override fun createUser(
         name: String,
         email: String,
+        passwordValidation: PasswordValidationInfo,
     ): User =
-        User(users.size, name = name, email = email)
+        User(users.size, name, email, passwordValidation)
             .also { users.add(it) }
 
     override fun findByEmail(email: String): User? = users.firstOrNull { it.email == email }
