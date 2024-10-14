@@ -70,6 +70,7 @@ class RepositoryUserInMem : RepositoryUser {
     }
 
     override fun clear() {
+        tokens.clear()
         users.clear()
     }
 }

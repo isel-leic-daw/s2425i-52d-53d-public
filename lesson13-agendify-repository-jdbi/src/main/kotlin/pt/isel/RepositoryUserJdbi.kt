@@ -47,6 +47,7 @@ class RepositoryUserJdbi(
     }
 
     override fun clear() {
+        handle.createUpdate("DELETE FROM dbo.Tokens").execute()
         handle.createUpdate("DELETE FROM dbo.users").execute()
     }
 
