@@ -23,9 +23,8 @@ repositories {
 dependencies {
     api(project(":lesson09-agendify-services"))
 
-    // To use Spring MVC and the Servlet API
+    // To use Spring MVC
     implementation("org.springframework:spring-webmvc:6.1.13")
-    implementation("jakarta.servlet:jakarta.servlet-api:6.1.0")
 
     // To use SLF4J
     implementation("org.slf4j:slf4j-api:2.0.16")
@@ -36,11 +35,10 @@ dependencies {
     testImplementation("org.postgresql:postgresql:42.7.2")
 
     // To use WebTestClient on tests
-    testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-webflux")
-    testImplementation("org.springframework.boot:spring-boot-starter-web")
     testImplementation(kotlin("test"))
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.0")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.0")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.0")
 }
 
 kotlin {

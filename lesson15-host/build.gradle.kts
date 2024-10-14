@@ -16,6 +16,7 @@ dependencies {
     // Module dependencies
     implementation(project(":lesson12-agendify-http-api"))
     implementation(project(":lesson13-agendify-repository-jdbi"))
+    implementation(project(":lesson16-http-pipeline"))
 
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
@@ -27,13 +28,19 @@ dependencies {
     implementation("org.postgresql:postgresql:42.7.2")
 
     testImplementation(kotlin("test"))
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-webflux")
 }
 
 tasks.bootRun {
     environment("DB_URL", "jdbc:postgresql://localhost:5432/db?user=dbuser&password=changeit")
 }
-tasks.test {
+
+tasks.withType<Test> {
     useJUnitPlatform()
+    environment("DB_URL", "jdbc:postgresql://localhost:5432/db?user=dbuser&password=changeit")
+    dependsOn(":lesson13-agendify-repository-jdbi:dbTestsWait")
+    finalizedBy(":lesson13-agendify-repository-jdbi:dbTestsDown")
 }
 kotlin {
     jvmToolchain(21)

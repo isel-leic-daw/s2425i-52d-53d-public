@@ -40,7 +40,6 @@ class AuthenticationInterceptor(
     }
 
     companion object {
-        private val logger = LoggerFactory.getLogger(AuthenticationInterceptor::class.java)
         const val NAME_AUTHORIZATION_HEADER = "Authorization"
         private const val NAME_WWW_AUTHENTICATE_HEADER = "WWW-Authenticate"
     }

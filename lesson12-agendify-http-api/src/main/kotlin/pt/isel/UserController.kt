@@ -56,7 +56,7 @@ class UserController(
         return when (res) {
             is Success ->
                 ResponseEntity
-                    .status(200)
+                    .status(HttpStatus.OK)
                     .body(UserCreateTokenOutputModel(res.value.tokenValue))
 
             is Failure ->
@@ -73,10 +73,14 @@ class UserController(
     }
 
     @GetMapping("/api/me")
-    fun userHome(userAuthenticatedUser: AuthenticatedUser): UserHomeOutputModel =
-        UserHomeOutputModel(
-            id = userAuthenticatedUser.user.id,
-            name = userAuthenticatedUser.user.name,
-            email = userAuthenticatedUser.user.email,
-        )
+    fun userHome(userAuthenticatedUser: AuthenticatedUser): ResponseEntity<UserHomeOutputModel> =
+        ResponseEntity
+            .status(HttpStatus.OK)
+            .body(
+                UserHomeOutputModel(
+                    id = userAuthenticatedUser.user.id,
+                    name = userAuthenticatedUser.user.name,
+                    email = userAuthenticatedUser.user.email,
+                ),
+            )
 }
