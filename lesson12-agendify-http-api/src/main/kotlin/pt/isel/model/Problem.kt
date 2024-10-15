@@ -37,4 +37,6 @@ sealed class Problem(
     data object InsecurePassword : Problem(URI("$PROBLEM_URI_PATH/insecure-password"))
 
     data object UserOrPasswordAreInvalid : Problem(URI("$PROBLEM_URI_PATH/user-or-password-are-invalid"))
+
+    data object InvalidRequestContent : Problem(URI("$PROBLEM_URI_PATH/invalid-request-content"))
 }
