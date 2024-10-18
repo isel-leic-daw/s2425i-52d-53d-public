@@ -17,6 +17,7 @@ dependencies {
     implementation(project(":lesson12-agendify-http-api"))
     implementation(project(":lesson13-agendify-repository-jdbi"))
     implementation(project(":lesson16-http-pipeline"))
+    implementation(project(":lesson18-agendify-SSE"))
 
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
