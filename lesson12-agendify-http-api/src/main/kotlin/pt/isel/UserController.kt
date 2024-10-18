@@ -16,6 +16,16 @@ import pt.isel.model.UserInput
 class UserController(
     private val userService: UserService,
 ) {
+    /**
+     * Try with:
+     curl -X POST http://localhost:8080/api/users \
+     -H "Content-Type: application/json" \
+     -d '{
+     "name": "Paul Atreides",
+     "email": "paul@atreides.com",
+     "password": "muadib"
+     }'
+     */
     @PostMapping("/api/users")
     fun createUser(
         @RequestBody userInput: UserInput,
@@ -48,6 +58,15 @@ class UserController(
         }
     }
 
+    /**
+     * Try with:
+     curl -X POST http://localhost:8080/api/users/token \
+     -H "Content-Type: application/json" \
+     -d '{
+     "email": "paul@atreides.com",
+     "password": "muadib"
+     }'
+     */
     @PostMapping("/api/users/token")
     fun token(
         @RequestBody input: UserCreateTokenInputModel,

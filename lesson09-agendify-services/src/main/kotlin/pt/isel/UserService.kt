@@ -60,9 +60,7 @@ class UserService(
                 repoUsers.findByEmail(email)
                     ?: return@run failure(TokenCreationError.UserOrPasswordAreInvalid)
             if (!usersDomain.validatePassword(password, user.passwordValidation)) {
-                if (!usersDomain.validatePassword(password, user.passwordValidation)) {
-                    return@run failure(TokenCreationError.UserOrPasswordAreInvalid)
-                }
+                return@run failure(TokenCreationError.UserOrPasswordAreInvalid)
             }
             val tokenValue = usersDomain.generateTokenValue()
             val now = clock.now()

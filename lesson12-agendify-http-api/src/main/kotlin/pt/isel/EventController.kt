@@ -31,14 +31,26 @@ class EventController(
             is Failure -> ResponseEntity.notFound().build()
         }
 
+    /**
+     * Try with:
+     curl -X POST http://localhost:8080/api/events \
+     -H "Authorization: Bearer n8AVqGnzbGkvDPryo8t14kWz6KfQIxygL3AH-HHMS28=" \
+     -H "Content-Type: application/json" \
+     -d '{
+     "title": "Arrakis Sandstorm Meeting",
+     "description": "Discuss plans for the Fremen alliance",
+     "selectionType": "SINGLE"
+     }'
+     */
     @PostMapping
     fun createEvent(
+        organizer: AuthenticatedUser,
         @RequestBody ev: EventInput,
     ): ResponseEntity<Any> {
         val event: Either<EventError.UserNotFound, Event> =
-            eventService.createEvent(ev.title, ev.description, ev.organizerId, ev.selectionType)
+            eventService.createEvent(ev.title, ev.description, organizer.user.id, ev.selectionType)
         return when (event) {
-            is Success -> ResponseEntity.ok(event.value)
+            is Success -> ResponseEntity.ok(event.value.id)
             is Failure -> Problem.ParticipantNotFound.response(HttpStatus.NOT_FOUND)
         }
     }

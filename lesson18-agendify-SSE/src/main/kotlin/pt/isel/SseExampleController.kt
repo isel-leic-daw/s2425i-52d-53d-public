@@ -11,6 +11,17 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
+/**
+ * Yuml class diagram:
+[SseExampleController]-.-new>[Listener]
+[SseExampleController]->*[Listener]
+[Listener]->[SseEmitter]
+[Listener]-.-new>[SseEventBuilder]
+
+[Listener|(): Unit]
+[SseEmitter|send(SseEventBuilder)]
+[SseExampleController|handlerEventStream()]
+ */
 @RestController
 class SseExampleController {
     // Important: mutable state on a singleton service
@@ -62,7 +73,7 @@ class SseExampleController {
      *   curl -N -H "Last-Event-ID: 1004" http://localhost:8080/api/sse/listen
      */
     @GetMapping("/api/sse/listen")
-    fun handleEventStream(
+    fun handlerEventStream(
         @RequestHeader(value = "Last-Event-ID", required = false) lastEventId: String?,
     ): SseEmitter {
         val connId = ++connectionCounter

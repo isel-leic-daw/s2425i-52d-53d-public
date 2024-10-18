@@ -6,6 +6,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.HttpStatus
 import org.springframework.test.web.reactive.server.WebTestClient
 import pt.isel.model.TimeSlotInput
+import pt.isel.model.UserCreateTokenOutputModel
 import java.time.LocalDateTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -69,17 +70,35 @@ abstract class AbstractTimeSlotControllerTest {
         // Arrange
         val organizer = userService.createUser("John", "john@example.com", "camafeuAtleta")
         check(organizer is Success)
-        val guest = userService.createUser("Jane", "jane@example.com", "rainhaDaSelva")
+        val janePasswd = "rainhaDaSelva"
+        val guest = userService.createUser("Jane", "jane@example.com", janePasswd)
         check(guest is Success)
         val event = eventService.createEvent("Workshop", "Tech workshop", organizer.value.id, SelectionType.SINGLE)
         check(event is Success)
         val timeSlot = eventService.createFreeTimeSlot(event.value.id, LocalDateTime.now(), 120)
         check(timeSlot is Success)
 
+        val guestToken =
+            webTestClient
+                .post()
+                .uri("/api/users/token")
+                .bodyValue(
+                    mapOf(
+                        "email" to guest.value.email,
+                        "password" to janePasswd,
+                    ),
+                ).exchange()
+                .expectStatus()
+                .isOk
+                .expectBody(UserCreateTokenOutputModel::class.java)
+                .returnResult()
+                .responseBody!!
+
         // Act & Assert
         webTestClient
-            .post()
-            .uri("/api/events/${event.value.id}/timeslots/${timeSlot.value.id}/participants/${guest.value.id}")
+            .put()
+            .uri("/api/events/${event.value.id}/timeslots/${timeSlot.value.id}/participants")
+            .header("Authorization", "Bearer ${guestToken.token}")
             .exchange()
             .expectStatus()
             .isOk
@@ -97,7 +116,8 @@ abstract class AbstractTimeSlotControllerTest {
         check(organizer is Success)
         val guest1 = userService.createUser("Jane", "jane@example.com", "rainhaDaSelva")
         check(guest1 is Success)
-        val guest2 = userService.createUser("Paul", "paul@example.com", "saudDoLibano")
+        val paulPasswd = "saudDoLibano"
+        val guest2 = userService.createUser("Paul", "paul@example.com", paulPasswd)
         check(guest2 is Success)
         val event = eventService.createEvent("Training", "Employee training", organizer.value.id, SelectionType.SINGLE)
         check(event is Success)
@@ -109,11 +129,28 @@ abstract class AbstractTimeSlotControllerTest {
                 .let { eventService.addParticipantToTimeSlot(it.value.id, guest1.value.id) }
         check(timeSlot is Success)
 
+        val guestToken =
+            webTestClient
+                .post()
+                .uri("/api/users/token")
+                .bodyValue(
+                    mapOf(
+                        "email" to guest2.value.email,
+                        "password" to paulPasswd,
+                    ),
+                ).exchange()
+                .expectStatus()
+                .isOk
+                .expectBody(UserCreateTokenOutputModel::class.java)
+                .returnResult()
+                .responseBody!!
+
         // Act & Assert
         // Try to allocate slot to guest 2
         webTestClient
-            .post()
-            .uri("/api/events/${event.value.id}/timeslots/${timeSlot.value.id}/participants/${guest2.value.id}")
+            .put()
+            .uri("/api/events/${event.value.id}/timeslots/${timeSlot.value.id}/participants")
+            .header("Authorization", "Bearer ${guestToken.token}")
             .exchange()
             .expectStatus()
             .isEqualTo(HttpStatus.CONFLICT)

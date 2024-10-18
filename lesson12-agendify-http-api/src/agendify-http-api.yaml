@@ -99,9 +99,11 @@ paths:
                 $ref: '#/components/schemas/TimeSlot'
 
   /events/{eventId}/timeSlots/{timeSlotId}/participants:
-    post:
+    put:
       summary: Add a participant to a time slot
       operationId: addParticipantToTimeSlot
+      security:
+        - bearerAuth: [ ]    # Add security requirement for bearer token
       parameters:
         - name: eventId
           in: path
@@ -146,7 +148,7 @@ components:
           $ref: '#/components/schemas/Participant'
         selectionType:
           type: string
-          enum: [SINGLE, MULTIPLE]
+          enum: [ SINGLE, MULTIPLE ]
         timeSlots:
           type: array
           items:
@@ -163,7 +165,7 @@ components:
           type: integer
         selectionType:
           type: string
-          enum: [SINGLE, MULTIPLE]
+          enum: [ SINGLE, MULTIPLE ]
 
     Participant:
       type: object
@@ -176,7 +178,7 @@ components:
           type: string
         kind:
           type: string
-          enum: [ORGANIZER, GUEST]
+          enum: [ ORGANIZER, GUEST ]
 
     ParticipantInput:
       type: object
@@ -187,7 +189,7 @@ components:
           type: string
         kind:
           type: string
-          enum: [ORGANIZER, GUEST]
+          enum: [ ORGANIZER, GUEST ]
 
     TimeSlot:
       type: object

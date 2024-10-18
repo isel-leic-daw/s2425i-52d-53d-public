@@ -1,7 +1,15 @@
 package pt.isel
 
+import jakarta.annotation.PreDestroy
 import jakarta.inject.Named
+import kotlinx.datetime.Clock
+import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 sealed class EventError {
     data object EventNotFound : EventError()
@@ -25,6 +33,83 @@ sealed class TimeSlotError {
 class EventService(
     private val trxManager: TransactionManager,
 ) {
+    // Important: mutable state on a singleton service
+    private val listeners = mutableMapOf<Event, List<UpdatedTimeSlotEmitter>>()
+    private var currentId = 0L
+    private val lock = ReentrantLock()
+
+    // A scheduler to send the periodic keep-alive events
+    private val scheduler: ScheduledExecutorService =
+        Executors.newScheduledThreadPool(1).also {
+            it.scheduleAtFixedRate({ keepAlive() }, 2, 2, TimeUnit.SECONDS)
+        }
+
+    @PreDestroy
+    fun shutdown() {
+        logger.info("shutting down")
+        scheduler.shutdown()
+    }
+
+    fun addEmitter(
+        eventId: Int,
+        listener: UpdatedTimeSlotEmitter,
+    ) = lock.withLock {
+        val ev =
+            trxManager.run {
+                repoEvents.findById(eventId)
+            }
+        requireNotNull(ev)
+
+        logger.info("adding listener")
+        val oldListeners = listeners.getOrDefault(ev, emptyList())
+        listeners.putIfAbsent(ev, oldListeners + listener)
+        listener.onCompletion {
+            logger.info("onCompletion")
+            removeEmitter(ev, listener)
+        }
+        listener.onError {
+            logger.info("onError")
+            removeEmitter(ev, listener)
+        }
+        listener
+    }
+
+    private fun removeEmitter(
+        ev: Event,
+        listener: UpdatedTimeSlotEmitter,
+    ) = lock.withLock {
+        logger.info("removing listener")
+        val oldListeners = listeners[ev]
+        requireNotNull(oldListeners)
+        listeners.putIfAbsent(ev, oldListeners - listener)
+    }
+
+    private fun keepAlive() =
+        lock.withLock {
+            logger.info("keepAlive, sending to {} listeners", listeners.values.flatten().size)
+            val signal = UpdatedTimeSlot.KeepAlive(Clock.System.now())
+            listeners.values.flatten().forEach {
+                try {
+                    it.emit(signal)
+                } catch (ex: Exception) {
+                    logger.info("Exception while sending keepAlive signal - {}", ex.message)
+                }
+            }
+        }
+
+    private fun sendEventToAll(
+        ev: Event,
+        signal: UpdatedTimeSlot,
+    ) {
+        listeners[ev]?.forEach {
+            try {
+                it.emit(signal)
+            } catch (ex: Exception) {
+                logger.info("Exception while sending Message signal - {}", ex.message)
+            }
+        }
+    }
+
     /**
      * Add participant to a time slot
      */
@@ -54,6 +139,7 @@ class EventService(
 
                     // Replace the old time slot with the updated one in the event
                     repoSlots.save(updatedTimeSlot)
+                    sendEventToAll(timeSlot.event, UpdatedTimeSlot.Message(++currentId, updatedTimeSlot))
 
                     // Return the updated event in the Either type
                     success(updatedTimeSlot)
@@ -66,6 +152,7 @@ class EventService(
                     }
                     // Otherwise, create a new Participant in that TimeSlot for that user.
                     repoParticipants.createParticipant(user, timeSlot)
+                    sendEventToAll(timeSlot.event, UpdatedTimeSlot.Message(++currentId, timeSlot))
                     success(timeSlot)
                 }
             }
@@ -120,4 +207,8 @@ class EventService(
                 is TimeSlotMultiple -> success(repoParticipants.findAllByTimeSlot(slot))
             }
         }
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(EventService::class.java)
+    }
 }

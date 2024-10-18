@@ -9,6 +9,7 @@ import org.springframework.test.web.reactive.server.WebTestClient
 import pt.isel.model.EventInput
 import kotlin.math.abs
 import kotlin.random.Random
+import kotlin.test.assertIs
 
 fun newTokenValidationData() = "token-${abs(Random.nextLong())}"
 
@@ -20,6 +21,9 @@ abstract class AbstractEventControllerTest {
     // Injected by the test environment
     @LocalServerPort
     var port: Int = 0
+
+    @Autowired
+    private lateinit var userService: UserService
 
     @Autowired
     private lateinit var trxManager: TransactionManager
@@ -114,15 +118,18 @@ abstract class AbstractEventControllerTest {
 
     @Test
     fun `createEvent should return 201 if event created successfully`() {
+        val rosePasswd = "changeIt"
         val rose =
-            trxManager.run {
-                repoUsers.createUser(
-                    "Rose Mary",
-                    "rose@example.com",
-                    PasswordValidationInfo(newTokenValidationData()),
-                )
-            }
-        val event = EventInput("Fun", "Hang around and have fun.", rose.id, SelectionType.MULTIPLE)
+            userService.createUser(
+                "Rose Mary",
+                "rose@example.com",
+                rosePasswd,
+            )
+        assertIs<Success<User>>(rose)
+        val token = userService.createToken(rose.value.email, rosePasswd)
+        assertIs<Success<TokenExternalInfo>>(token)
+
+        val event = EventInput("Fun", "Hang around and have fun.", SelectionType.MULTIPLE)
 
         // given: an HTTP client
         val client = WebTestClient.bindToServer().baseUrl("http://localhost:$port/api").build()
@@ -132,20 +139,21 @@ abstract class AbstractEventControllerTest {
             .post()
             .uri("/events")
             .bodyValue(event)
+            .header("Authorization", "Bearer ${token.value.tokenValue}")
             .exchange()
             .expectStatus()
             .isOk
-            .expectBody(Event::class.java)
+            .expectBody(String::class.java)
             .also {
                 val eventId = trxManager.run { repoEvents.findAll().last().id }
-                it.isEqualTo(Event(eventId, event.title, event.description, rose, event.selectionType))
+                it.isEqualTo(eventId.toString())
             }
     }
 
     @Test
-    fun `createEvent should return 404 if organizer not found`() {
+    fun `createEvent should return 401 with unauthenticated organizer`() {
         // Mock event service to return EventError.ParticipantNotFound
-        val eventInput = EventInput("Event 777", "Description 1", 999, SelectionType.SINGLE)
+        val eventInput = EventInput("Event 777", "Description 1", SelectionType.SINGLE)
 
         // given: an HTTP client
         val client = WebTestClient.bindToServer().baseUrl("http://localhost:$port/api").build()
@@ -155,8 +163,9 @@ abstract class AbstractEventControllerTest {
             .post()
             .uri("/events")
             .bodyValue(eventInput)
+            .header("Authorization", "Bearer IllegalTokenXXX")
             .exchange()
             .expectStatus()
-            .isNotFound
+            .isUnauthorized
     }
 }
