@@ -1,0 +1,16 @@
+<html>
+    <head>
+        <title>Demo FE JS</title>
+        <!-- ISOLATION => no conflicts between modules -->
+         <!-- HTTTP requests:
+          1. s1.js
+          2. printer.js -> imported from the a1.js
+          2. s2.js => requestes Concurrently with the printer.js
+        -->
+        <script src="s1.js" type="module"></script>
+        <script src="s2.js" type="module"></script>
+    </head>
+    <body>
+        <h1>First demo Js in FrontEnd</h1>
+    </body>
+</html>
