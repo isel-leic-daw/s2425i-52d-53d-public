@@ -22,6 +22,7 @@ function TaskRowView(props: { task: TaskModel, children: React.ReactNode}) {
             <td>{props.task.name}</td>
             <td>{props.task.desc}</td>
             <td><input type="text"></input></td>
+            {props.children}
         </tr>
     )
 }
@@ -39,7 +40,7 @@ function tasksView(tasks: Array<TaskModel>) {
                 tasks.map(t => (
                     // ??? How to render the taskRowView
                     <TaskRowView task={t} key={t.id}>
-                        <p>Ola ISEL</p>
+                        <td>Ola ISEL</td>
                     </TaskRowView>
                 ))
             }
