@@ -3,5 +3,6 @@
 // import { demo03 } from "./demo03-components"
 // import { demo04 } from "./demo04-counter-state-WRONG";
 import { demo06 } from "./demo06-textfield-validator";
+import { demo07 } from  "./demo07-effects-intro-WRONG"
 
-demo06()
+demo07()
