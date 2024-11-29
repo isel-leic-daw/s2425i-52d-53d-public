@@ -4,7 +4,9 @@
   "description": "",
   "scripts": {
     "build": "webpack",
-    "start": "webpack serve"
+    "start": "webpack serve",
+    "test": "npx playwright test",
+    "test-report": "npx playwright show-report"
   },
   "author": "",
   "license": "ISC",
