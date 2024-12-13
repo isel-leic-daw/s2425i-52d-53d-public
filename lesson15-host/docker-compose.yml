@@ -1,0 +1,71 @@
+services:
+  # Just a machine running ubuntu, with 'dig' installed so that we can observe the docker compose environment.
+  ubuntu:
+    container_name: ubuntu
+    image: agendify-ubuntu
+    tty: true
+
+  agendify-postgres-tests:
+    container_name: agendify-postgres-test
+    image: agendify-postgres-test
+    environment:
+      - POSTGRES_USER=dbuser
+      - POSTGRES_PASSWORD=changeit
+      - POSTGRES_DB=db
+    ports:
+      - 5432:5432
+
+  db-tests:
+    container_name: db-tests
+    build:
+      context: ../lesson13-agendify-repository-jdbi
+      dockerfile: ../lesson13-agendify-repository-jdbi/tests/Dockerfile-db-test
+    environment:
+      - POSTGRES_USER=dbuser
+      - POSTGRES_PASSWORD=changeit
+      - POSTGRES_DB=db
+    ports:
+      - 5432:5432
+
+  # agendify-jvm-1 and agendify-jvm-2 are used to illustrate scenarios with a fixed number of servers
+  # with static and well know names.
+  agendify-jvm-1:
+    container_name: agendify-jvm-1
+    hostname: agendify-jvm-1
+    image: agendify-jvm
+    environment:
+      PORT: 8081
+      DB_URL: "jdbc:postgresql://db-tests:5432/db?user=dbuser&password=changeit"
+    ports:
+      - 8081:8081
+  agendify-jvm-2:
+    container_name: agendify-jvm-2
+    hostname: agendify-jvm-2
+    image: agendify-jvm
+    environment:
+      PORT: 8082
+      DB_URL: "jdbc:postgresql://db-tests:5432/db?user=dbuser&password=changeit"
+    ports:
+      - 8082:8082
+
+  # agendify-jvm-dynamic is used to illustrate scenarios with a dynamic number of servers
+  # without static and well know names.
+  # We will use docker compose scaling to create multiple instances of this service
+  agendify-jvm-dynamic:
+    image: agendify-jvm
+    hostname: agendify-jvm-dynamic
+    environment:
+      PORT: 8080
+      DB_URL: "jdbc:postgresql://agendify-postgres-test:5432/db?user=dbuser&password=changeit"
+
+  # The service running the load-balancer
+  nginx:
+    container_name: agendify-nginx
+    image: agendify-nginx
+    ports:
+      - 8080:8080
+      - 8088:8088
+    depends_on:
+      - agendify-jvm-1
+      - agendify-jvm-2
+      - agendify-jvm-dynamic
