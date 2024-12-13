@@ -1,0 +1,13 @@
+FROM openjdk:21
+ARG DEPENDENCY=build/dependency
+# first layer with the external libs (i.e. the files that change the least).
+COPY ${DEPENDENCY}/BOOT-INF/lib /app/lib
+
+# second layer with the 'META-INF' contents.
+COPY ${DEPENDENCY}/META-INF /app/META-INF
+
+# last layer with the application JARs (i.e. the files that change the most).
+COPY ${DEPENDENCY}/BOOT-INF/classes /app
+
+# the entry point
+ENTRYPOINT ["java","-cp","app:app/lib/*","pt.isel.AppAgendifyKt"]
